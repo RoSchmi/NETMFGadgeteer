@@ -4,17 +4,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatingCurrentSurvey", "HeatingCurrentSurvey\HeatingCurrentSurvey.csproj", "{CCCFE148-068B-4B22-9CB2-B2501E516DAF}"
-	ProjectSection(ProjectDependencies) = postProject
-		{9A2BEF70-2ED2-46EE-80C2-46DEA47B630B} = {9A2BEF70-2ED2-46EE-80C2-46DEA47B630B}
-		{D640BCD3-46DD-441A-9FBC-E041FA02008E} = {D640BCD3-46DD-441A-9FBC-E041FA02008E}
-		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902} = {032E3DEB-7E43-40EC-9DB8-D2CD79A01902}
-	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonNETMF_Dll", "..\..\HeatingSurvey_3\HeatingSurvey\ButtonNETMF_Dll\ButtonNETMF_Dll.csproj", "{9A2BEF70-2ED2-46EE-80C2-46DEA47B630B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonNETMF_Dll", "ButtonNETMF_Dll\ButtonNETMF_Dll.csproj", "{9A2BEF70-2ED2-46EE-80C2-46DEA47B630B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DayLihtSavingTime_Dll", "..\..\HeatingSurvey_3\HeatingSurvey\DayLihtSavingTime_Dll\DayLihtSavingTime_Dll.csproj", "{D640BCD3-46DD-441A-9FBC-E041FA02008E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DayLihtSavingTime_Dll", "DayLihtSavingTime_Dll\DayLihtSavingTime_Dll.csproj", "{D640BCD3-46DD-441A-9FBC-E041FA02008E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EthernetJ11D_Dll", "..\..\HeatingSurvey_3\HeatingSurvey\EthernetJ11D_Dll\EthernetJ11D_Dll.csproj", "{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EthernetJ11D_Dll", "EthernetJ11D_Dll\EthernetJ11D_Dll.csproj", "{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
