@@ -7,7 +7,7 @@ namespace HeatingSurvey
     {
         private OnOffSample() { }       // Parameterless constructor, not really needed here (only needed when used in EntityFramework)
 
-        public OnOffSample(string pPartitionKey, DateTime pTimeOfSample, int pTimeOffsetUTC, string pStatus, string pLastStatus, string pLocation, TimeSpan ptimeFromLast, TimeSpan pOnTimeDay, int pCD, TimeSpan pOnTimeWeek, int pCW,TimeSpan pOnTimeMonth, int pCM, TimeSpan pOnTimeYear, int pCY,  int pIterations, uint pRemainingRam, int pforcedReboots, int pbadReboots, int pSendErrors, char pBootReason, bool pForceSend, string pMessage, string pVal_1 = "", string pVal_2 = "", string pVal_3 = "")
+        public OnOffSample(string pPartitionKey, DateTime pTimeOfSample, int pTimeOffsetUTC, string pStatus, string pLastStatus, string pLocation, TimeSpan ptimeFromLast, TimeSpan pOnTimeDay, int pCD, TimeSpan pOnTimeWeek, int pCW,TimeSpan pOnTimeMonth, int pCM, TimeSpan pOnTimeYear, int pCY,  int pIterations, uint pRemainingRam, int pforcedReboots, int pbadReboots, int pSendErrors, char pBootReason, bool pForceSend, string pMessage, byte pSendInfo = 0, string pVal_1 = "", string pVal_2 = "", string pVal_3 = "")
         {
             PartitionKey = pPartitionKey;
             TimeOfSample = pTimeOfSample;
@@ -32,6 +32,7 @@ namespace HeatingSurvey
             BootReason = pBootReason;
             ForceSend = pForceSend;
             Message = pMessage;
+            SendInfo = pSendInfo;
             Val_1 = pVal_1;
             Val_2 = pVal_2;
             Val_3 = pVal_3;
@@ -47,6 +48,7 @@ namespace HeatingSurvey
         public int CM { get; set;}        
         public TimeSpan OnTimeYear { get; set;}        
         public int CY { get; set;}
+        public byte SendInfo { get; set; }
         public string Val_1 { get; set; }
         public string Val_2 { get; set; }
         public string Val_3 { get; set; }

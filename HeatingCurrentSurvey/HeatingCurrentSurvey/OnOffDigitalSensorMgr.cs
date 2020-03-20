@@ -80,7 +80,7 @@ namespace HeatingSurvey
                             if (oldState == InputSensorState.High)
                             {
                                 actState = InputSensorState.Low;                             
-                                OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
+                                OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
                                 oldState = InputSensorState.Low;
                             }
                         }
@@ -94,7 +94,7 @@ namespace HeatingSurvey
                             if (oldState == InputSensorState.Low)
                             {
                                 actState = InputSensorState.High;                               
-                                OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
+                                OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
                                 oldState = InputSensorState.High;
                             }
                         }
@@ -104,7 +104,7 @@ namespace HeatingSurvey
                     if (actTime.Hour == 23 && actTime.Minute == 59 && actTime.Second > 30)
                     {
                         actState = InputSensorState.High;
-                        OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now, SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, true));
+                        OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now, SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, true));
                         oldState = InputSensorState.High;
                         try { GHI.Processor.Watchdog.ResetCounter(); }
                         catch { };

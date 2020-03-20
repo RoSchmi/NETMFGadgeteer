@@ -1817,6 +1817,7 @@ namespace RoSchmi.RFM69_NETMF
             long StartTime = Microsoft.SPOT.Hardware.Utility.GetMachineTime().Ticks;
 
             setMode(RF69_MODE_STANDBY); // turn off receiver to prevent reception while filling fifo
+            
             while (true)                // wait for ModeReady with timeout
             {
                 if ((readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) != 0x00)

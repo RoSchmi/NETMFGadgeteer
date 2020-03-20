@@ -1,3 +1,5 @@
+// Adapted for HeatingCurrentSurvey 10. March 2020
+
 using System;
 using Microsoft.SPOT;
 using System.Collections;
@@ -17,6 +19,7 @@ namespace HeatingSurvey
         #region fields belonging to AzureSendManager
         //****************  SendManager *************************************
         static int yearOfLastSend = 2000;
+        static string prefixOfLastTable = "";
         public static DateTime sampleTimeOfLastSent;  // initial value is set in ProgramStarted
         private DateTime _timeOfLastSend;
         public static int _iteration = 0;
@@ -276,9 +279,10 @@ namespace HeatingSurvey
                     }
 
                     #region Create a Azure Table, Name = _tablePrefix plus the actual year (only when needed)
-                    if (DateTime.Now.Year != yearOfLastSend)
+                    if ((DateTime.Now.Year != yearOfLastSend) || (_tablePrefix != prefixOfLastTable))
                     {
                         actYear = DateTime.Now.Year;
+                        
                         tableName = _tablePrefix + actYear.ToString();
 
                         createTableReturnCode = createTable(_CloudStorageAccount, tableName);
@@ -288,14 +292,17 @@ namespace HeatingSurvey
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
                             //Debug.Print("Table was created: " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
+                            
                             this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, "Table created"));
                             yearOfLastSend = actYear;
+                            prefixOfLastTable = _tablePrefix;
                         }
                         else
                         {
                             if (createTableReturnCode == HttpStatusCode.Conflict)
                             {
                                 //Debug.Print("Table " + tableName + " already exists");
+                                prefixOfLastTable = _tablePrefix;
                                 yearOfLastSend = actYear;
                                 this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, "Table already exists" ));
                             }
@@ -349,25 +356,23 @@ namespace HeatingSurvey
 
                         property = new TableEntityProperty("T_1", nextSampleValue.T_0.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("ID_1", nextSampleValue.ID_0.ToString("D3"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Batt_1", nextSampleValue.Lo_0 ? "Lo" : ".", "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
+                        
+                       
                         property = new TableEntityProperty("T_2", nextSampleValue.T_1.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("ID_2", nextSampleValue.ID_1.ToString("D3"), "Edm.String");
+                       
+
+                        property = new TableEntityProperty("T_3", nextSampleValue.T_2.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Batt_2", nextSampleValue.Lo_1 ? "Lo" : ".", "Edm.String");
+                        
+
+                        property = new TableEntityProperty("T_4", nextSampleValue.T_3.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
 
-                        property = new TableEntityProperty("T_3", nextSampleValue.T_2.ToString("f1"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("ID_3", nextSampleValue.ID_2.ToString("D3"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Batt_3", nextSampleValue.Lo_2 ? "Lo" : ".", "Edm.String");
+                        property = new TableEntityProperty("T_5", nextSampleValue.T_4.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
 
-                        property = new TableEntityProperty("T_4", nextSampleValue.T_3.ToString("f1"), "Edm.String");
+                        property = new TableEntityProperty("T_6", nextSampleValue.T_5.ToString("f2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
                         
                         property = new TableEntityProperty(_socketSensorHeader, nextSampleValue.SecondReport, "Edm.String");
@@ -380,6 +385,9 @@ namespace HeatingSurvey
                         property = new TableEntityProperty("SampleTime", nextSampleValue.TimeOfSample.ToString() + " " + TimeOffsetUTCString, "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
                         property = new TableEntityProperty("TimeFromLast", nextSampleValue.TimeFromLast.Days.ToString("D3") + "-" + nextSampleValue.TimeFromLast.Hours.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Minutes.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Seconds.ToString("D2"), "Edm.String");
+                        propertiesAL.Add(makePropertyArray.result(property));
+
+                        property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D3"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
 
                         property = new TableEntityProperty("RSSI", nextSampleValue.RSSI.ToString("D3"), "Edm.String");
@@ -508,7 +516,7 @@ namespace HeatingSurvey
         {
             table = new TableClient(pCloudStorageAccount, caCerts, _debug, _debug_level);
 
-           //  public TableClient(CloudStorageAccount account, X509Certificate[] pCertificat, int pTimeZoneOffset, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel)
+         
 
             // To use Fiddler as WebProxy include the following line. Use the local IP-Address of the PC where Fiddler is running
             // see: -http://blog.devmobile.co.nz/2013/01/09/netmf-http-debugging-with-fiddler

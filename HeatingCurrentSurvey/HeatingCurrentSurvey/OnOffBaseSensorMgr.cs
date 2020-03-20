@@ -57,6 +57,13 @@ namespace HeatingSurvey
             public bool OldState
             { get; private set; }
 
+            /// <summary>
+            /// RepaeatCount to succeed
+            /// </summary>
+            /// 
+            public byte RepeatSend
+            { get; private set; }
+
 
             /// <summary>
             /// Timestamp
@@ -132,10 +139,11 @@ namespace HeatingSurvey
 
             
 
-            internal OnOffSensorEventArgs(InputSensorState pActState, InputSensorState pOldState, DateTime pTimeStamp, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay, UInt32 pVal_1 = 0, UInt32 pVal_2 = 0, UInt32 pVal_3 = 0)
+            internal OnOffSensorEventArgs(InputSensorState pActState, InputSensorState pOldState, byte pRepeatSend, DateTime pTimeStamp, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay, UInt32 pVal_1 = 0, UInt32 pVal_2 = 0, UInt32 pVal_3 = 0)
             {
                 this.ActState = pActState == InputSensorState.High ? true : false;
                 this.OldState = pOldState == InputSensorState.High ? true : false;
+                this.RepeatSend = pRepeatSend;
                 this.Timestamp = pTimeStamp;
                 this.DestinationTable = pDestinationTable;
                 this.MeasuredQuantity = pMeasuredQuantity;

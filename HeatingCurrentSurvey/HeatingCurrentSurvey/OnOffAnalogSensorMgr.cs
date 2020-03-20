@@ -98,7 +98,7 @@ namespace HeatingSurvey
                                     //DateTime time = DateTime.Now;
                                     //Debug.Print("On " + time.TimeOfDay  + ": " + sum + "\r\n");
                                     //OnCurrentSensorSend(this, new CurrentSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
-                                    OnCurrentSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
+                                    OnCurrentSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
                                     oldState = InputSensorState.Low;
                                 }
                             }
@@ -120,7 +120,7 @@ namespace HeatingSurvey
                                     //DateTime time = DateTime.Now;
                                     //Debug.Print("Off " + time.TimeOfDay  + ": " + sum + "\r\n");
                                     //OnCurrentSensorSend(this, new CurrentSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
-                                    OnCurrentSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
+                                    OnCurrentSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false));
                                     oldState = InputSensorState.High;
                                 }
                             }

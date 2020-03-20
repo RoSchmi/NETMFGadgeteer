@@ -721,6 +721,8 @@ namespace HeatingSurvey
             propertiesAL.Add(property.propertyArray());
             property = new TableEntityProperty("Val1", nextSampleValue.Val_1, "Edm.String");
             propertiesAL.Add(property.propertyArray());
+            property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D3"), "Edm.String");
+            propertiesAL.Add(property.propertyArray());
             property = new TableEntityProperty("Iterations", nextSampleValue.Iterations.ToString("D6"), "Edm.String");
             propertiesAL.Add(property.propertyArray());
             property = new TableEntityProperty("Sends", azureSends.ToString("D6"), "Edm.String");

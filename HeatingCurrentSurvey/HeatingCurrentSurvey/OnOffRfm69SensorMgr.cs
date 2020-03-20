@@ -138,6 +138,10 @@ namespace HeatingSurvey
             if (!_stopped)
             {
                 actPacketNum = int.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 0, 3)));
+                UInt16 sendInfo = UInt16.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 8, 4)));
+                byte repeatSend = (byte)(sendInfo % 10);
+                
+                
                 if (actPacketNum != lastPacketNum)
                 {
                     lastPacketNum = actPacketNum;
@@ -157,11 +161,11 @@ namespace HeatingSurvey
                     {
                         actState = cmdChar == '1' ? InputSensorState.High : InputSensorState.Low;
                         oldState = oldChar == '1' ? InputSensorState.High : InputSensorState.Low;
-                        OnRfm69OnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false, current, power, work));
+                        OnRfm69OnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, repeatSend, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false, current, power, work));
                     }
                     else
                     {
-                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
+                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
                     }
                 }
             }
@@ -229,7 +233,14 @@ namespace HeatingSurvey
             public UInt32 Val_3
             { get; private set; }
 
-            
+            /// <summary>
+            /// RepaeatCount to succeed
+            /// </summary>
+            /// 
+            public byte RepeatSend
+            { get; private set; }
+
+
             /// <summary>
             /// SensorLabel
             /// </summary>
@@ -279,12 +290,13 @@ namespace HeatingSurvey
             public int RSSI
             { get; private set; }
 
-            internal DataSensorEventArgs(DateTime pTimeStamp, UInt32 pVal_1, UInt32 pVal_2, UInt32 pVal3, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay)
+            internal DataSensorEventArgs(DateTime pTimeStamp, byte pRepeatSend, UInt32 pVal_1, UInt32 pVal_2, UInt32 pVal3, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay)
             {                
                 this.Timestamp = pTimeStamp;
                 this.Val_1 = pVal_1;
                 this.Val_2 = pVal_2;
-                this.Val_3 = pVal3;             
+                this.Val_3 = pVal3;
+                this.RepeatSend = pRepeatSend;
                 this.DestinationTable = pDestinationTable;
                 this.MeasuredQuantity = pMeasuredQuantity;
                 this.SensorLabel = pSensorLabel;

@@ -4,4 +4,8 @@
     <DeployTransport>USB</DeployTransport>
     <DeployDevice>Gadgeteer</DeployDevice>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <DeployTransport>USB</DeployTransport>
+    <DeployDevice>Gadgeteer</DeployDevice>
+  </PropertyGroup>
 </Project>
