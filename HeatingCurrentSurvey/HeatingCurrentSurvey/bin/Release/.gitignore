@@ -2,3 +2,10 @@
 
 ## Only include this file
 !.gitignore
+!ButtonNETMF_Dll.dll
+!ButtonNETMF_Dll.pdb
+!DayLihtSavingTime_Dll.dll
+!DayLihtSavingTime_Dll.pdb
+!EthernetJ11D_Dll.dll
+!EthernetJ11D_Dll.pdb
+!PervasiveDigital.Utility.dll
