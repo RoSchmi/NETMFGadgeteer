@@ -28,12 +28,15 @@ namespace HeatingSurvey
         // RoSchmi
         private static byte NETWORKID = 100;  // The same on all nodes that talk to each other
         //private static byte NETWORKID = 101;  // The same on all nodes that talk to each other
-        private static byte NODEID = 3;       // The ID of this node
+        // private static byte NODEID = 3;       // The ID of this node (the node to make tests)
+        private static byte NODEID = 1;          // The ID of this node (the node in the heating room)
 
         private const short LowBorderRSSI = -65;       // In automatic transmission control sending power is reduced to this border
         
         private const byte PowerLevel = 28;            // Sending-power starts with this Power Level (0 - 31)
         private const byte MaxPowerLevel = 28;         // Sending-power does not exceed this Power Level
+
+        private const UInt16 firstAfterBootMagicNumber = 999;
 
         #endregion
 
@@ -86,7 +89,7 @@ namespace HeatingSurvey
             }
             else
             {
-                Debug.Print("Rfm69 Initialization finished");
+                //Debug.Print("Rfm69 Initialization finished");
             }
             if (IS_RFM69HCW)
             {
@@ -140,6 +143,11 @@ namespace HeatingSurvey
                 actPacketNum = int.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 0, 3)));
                 UInt16 sendInfo = UInt16.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 8, 4)));
                 byte repeatSend = (byte)(sendInfo % 10);
+                
+                if ((sendInfo / 10) == firstAfterBootMagicNumber)     // 999 = magic number for first send after boot of sending device
+                {
+                    repeatSend = (byte)(repeatSend + 100);  // sets the first digit of info to signal first send after boot 
+                }
                 
                 
                 if (actPacketNum != lastPacketNum)

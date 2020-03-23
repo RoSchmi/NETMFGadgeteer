@@ -64,7 +64,6 @@
     <Compile Include="RFM69_NETMF.cs" />
     <Compile Include="RoSchmi\Net\Azure\Storage\AzureStorageHelper.cs" />
     <Compile Include="RoSchmi\Net\Azure\Storage\BasicHttpResponse.cs" />
-    <Compile Include="RoSchmi\Net\Azure\Storage\BlobClient.cs" />
     <Compile Include="RoSchmi\Net\Azure\Storage\ByteExtensions.cs" />
     <Compile Include="RoSchmi\Net\Azure\Storage\CloudStorageAccount.cs" />
     <Compile Include="RoSchmi\Net\Azure\Storage\ITableEntity.cs" />

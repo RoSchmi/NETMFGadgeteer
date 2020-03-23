@@ -5,23 +5,13 @@ namespace HeatingSurvey
 {
     class SampleHoldValue
     {
-        ushort _temp;
-        ushort _humid;
-
         public SampleHoldValue(ushort pTemp, ushort pHumid)
         {
-            this._temp = pTemp;
-            this._humid = pHumid;
+            this.Temp = pTemp;
+            this.Humid = pHumid;
         }
-        public ushort Temp
-        {
-            get { return this._temp; }
-            set { this._temp = value; }
-        }
-         public ushort Humid
-        {
-            get { return this._humid; }
-            set { this._humid = value; }
-        }
+        public ushort Temp {get; set;}
+        public ushort Humid { get; set; }
+        
     }
 }

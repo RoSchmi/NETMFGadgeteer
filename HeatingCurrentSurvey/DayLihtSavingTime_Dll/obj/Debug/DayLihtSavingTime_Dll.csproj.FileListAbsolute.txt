@@ -56,3 +56,7 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\TinyCLR_DebugReferences.cache
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\DayLihtSavingTime_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\DayLihtSavingTime_Dll.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\be\DayLihtSavingTime_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\be\DayLihtSavingTime_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\le\DayLihtSavingTime_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\DayLihtSavingTime_Dll\obj\Debug\le\DayLihtSavingTime_Dll.pdbx

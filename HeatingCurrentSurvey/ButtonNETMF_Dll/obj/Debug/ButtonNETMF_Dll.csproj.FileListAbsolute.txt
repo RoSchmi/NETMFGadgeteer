@@ -105,3 +105,7 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\TinyCLR_DebugReferences.cache
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\ButtonNETMF_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\ButtonNETMF_Dll.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\be\ButtonNETMF_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\be\ButtonNETMF_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\le\ButtonNETMF_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\le\ButtonNETMF_Dll.pdbx

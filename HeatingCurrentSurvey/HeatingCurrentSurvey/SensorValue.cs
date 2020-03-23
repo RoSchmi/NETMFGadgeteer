@@ -5,6 +5,7 @@ namespace HeatingSurvey
 {
     public class SensorValue
     {
+        /*
         DateTime _lastNetmfTime;
         byte _channel;
         byte _sensorID;
@@ -14,9 +15,11 @@ namespace HeatingSurvey
         UInt16 _hum;
         byte _randomId;
         bool _batteryIsLow;
+        */
 
         public SensorValue(DateTime pLastNetmfTime, byte pChannel, byte pSensorID, UInt32 pSampleTime, UInt16 pTemp, double pTempDouble, UInt16 pHum, byte pRandomId, bool pBatteryIsLow)
         {
+            /*
             this._lastNetmfTime = pLastNetmfTime;
             this._channel = pChannel;
             this._sensorID = pSensorID;
@@ -26,7 +29,31 @@ namespace HeatingSurvey
             this._hum = pHum;
             this._randomId = pRandomId;
             this._batteryIsLow = pBatteryIsLow;
+            */
+            this.LastNetmfTime = pLastNetmfTime;
+            this.Channel = pChannel;
+            this.SensorId = pSensorID;
+            this.SampleTime = pSampleTime;
+            this.Temp = pTemp;
+            this.TempDouble = pTempDouble;
+            this.Hum = pHum;
+            this.RandomId = pRandomId;
+            this.BatteryIsLow = pBatteryIsLow;
+
+
         }
+        public DateTime LastNetmfTime { get; set; }
+        public byte Channel { get; set; }
+        public byte SensorId { get; set; }
+        public UInt32 SampleTime { get; set; }
+        public UInt16 Temp { get; set; }
+        public double TempDouble { get; set; }
+        public UInt16 Hum { get; set; }
+        public byte RandomId { get; set; }
+        public bool BatteryIsLow { get; set; }
+
+
+        /*
         public DateTime LastNetmfTime
         {
             get { return this._lastNetmfTime; }
@@ -73,5 +100,6 @@ namespace HeatingSurvey
             get { return this._batteryIsLow; }
             set { this._batteryIsLow = value; }
         }
+         */
     }
 }

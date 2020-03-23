@@ -124,8 +124,8 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_Solar = new TimeSpan(0, 0, 1);
         private static TimeSpan sendInterval_Current = new TimeSpan(0, 0, 1);
 
-        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
-        private static bool workWithWatchDog = false; 
+        private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        //private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec     
 
@@ -170,16 +170,18 @@ namespace HeatingCurrentSurvey
         // A second table is generated, the name of this table is augmented with the suffix "Days" and the actual year (e.g. TestDays2018)
         //
 
-        /*
-        private static string _tablePreFix_Burner = "Test";     // Preset, comes in the sensor eventhandler
-        private static string _tablePreFix_Boiler = "Boiler";   // Preset, comes in the sensor eventhandle
-        private static string _tablePreFix_Solar = "SolarTest";     // Preset, comes in the sensor eventhandle
-        */
         
+        /*
         private static string _tablePreFix_Burner = "OnOff01";    // Preset, comes in the sensor eventhandler
         private static string _tablePreFix_Boiler = "OnOff02";    // Preset, comes in the sensor eventhandle
         private static string _tablePreFix_Solar = "OnOff03";     // Preset, comes in the sensor eventhandle
         private static string _tablePreFix_Current = "Current";   // Preset, comes in the sensor eventhandle
+        */
+        private static string _tablePreFix_Burner = "Brenner";    // Preset, comes in the sensor eventhandler
+        private static string _tablePreFix_Boiler = "BoilerHeizung";    // Preset, comes in the sensor eventhandle
+        private static string _tablePreFix_Solar = "Solar";     // Preset, comes in the sensor eventhandle
+        private static string _tablePreFix_Current = "Current";   // Preset, comes in the sensor eventhandle
+
         
 
         // Preset for the partitionKey of the table entities.        
@@ -215,7 +217,7 @@ namespace HeatingCurrentSurvey
         
         #region Settings concerning Rfm69 receiver
 
-        // Must be set in Class OnOffRfm69SensorMgr.cs
+        // Settings for Rfm69 (like Node IDs of sender and recipient) must be set in Class OnOffRfm69SensorMgr.cs
 
         static int Ch_1_Sel = 1;   // The Channel of the temp/humidity sensor (Values from 1 to 8 are allowed)
         static int Ch_2_Sel = 2;
@@ -264,6 +266,7 @@ namespace HeatingCurrentSurvey
         private static bool _willRebootAfterNextEvent = false;
 
         private const double InValidValue = 999.9;
+        
 
         static TimeSpan makeInvalidTimeSpan = new TimeSpan(0, 3, 0);  // When this timespan has elapsed, old sensor values are set to invalid
 
@@ -318,8 +321,7 @@ namespace HeatingCurrentSurvey
 
         private static OnOffDigitalSensorMgr myBurnerSensor;
         private static OnOffAnalogSensorMgr myStoragePumpSensor;
-        private static OnOffRfm69SensorMgr mySolarPumpCurrentSensor;
-        //private static OnOffRfm69SensorMgr mySmartmeterSensor;
+        private static OnOffRfm69SensorMgr mySolarPumpCurrentSensor;       
         private static CloudStorageAccount myCloudStorageAccount;
         private static AzureSendManager_Burner myAzureSendManager_Burner;
         private static AzureSendManager_Boiler myAzureSendManager_Boiler;

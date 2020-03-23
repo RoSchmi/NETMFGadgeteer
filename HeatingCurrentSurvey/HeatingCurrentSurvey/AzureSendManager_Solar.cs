@@ -689,6 +689,8 @@ namespace HeatingSurvey
 
         private new ArrayList createOnOffPropertyArrayList(OnOffSample nextSampleValue, int azureSends)
         {
+            string TimeOffsetUTCString = nextSampleValue.TimeOffsetUTC < 0 ? nextSampleValue.TimeOffsetUTC.ToString("D3") : "+" + nextSampleValue.TimeOffsetUTC.ToString("D3");
+
             ArrayList propertiesAL = new System.Collections.ArrayList();
             TableEntityProperty property;
 
@@ -699,7 +701,7 @@ namespace HeatingSurvey
             propertiesAL.Add(property.propertyArray());
             property = new TableEntityProperty("Location", nextSampleValue.Location, "Edm.String");
             propertiesAL.Add(property.propertyArray());
-            property = new TableEntityProperty("SampleTime", nextSampleValue.TimeOfSample.ToString(), "Edm.String");
+            property = new TableEntityProperty("SampleTime", nextSampleValue.TimeOfSample.ToString() + " " + TimeOffsetUTCString, "Edm.String");
             propertiesAL.Add(property.propertyArray());
             property = new TableEntityProperty("TimeFromLast", nextSampleValue.TimeFromLast.Days.ToString("D3") + "-" + nextSampleValue.TimeFromLast.Hours.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Minutes.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Seconds.ToString("D2"), "Edm.String");
             propertiesAL.Add(property.propertyArray());
