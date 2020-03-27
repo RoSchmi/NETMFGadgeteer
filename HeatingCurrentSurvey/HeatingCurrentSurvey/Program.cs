@@ -684,7 +684,7 @@ namespace HeatingCurrentSurvey
         #region Event SolarPumpCurrentDataSensor_SignalReceived
         static void mySolarPumpCurrentSensor_rfm69DataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
         {
-                // This eventmanager is for the case when Coninuous Sensordata (not switching of the pump) were senz
+                // This eventmanager is for the case when Coninuous Sensordata (not switching of the pump) were sent
                 string outString = string.Empty;
                 bool forceSend = false;
                 double dayMaxBefore =  _dayMax < 0 ? 0.00 : _dayMax;
