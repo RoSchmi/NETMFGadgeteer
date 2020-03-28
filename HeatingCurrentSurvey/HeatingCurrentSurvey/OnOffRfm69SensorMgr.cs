@@ -142,14 +142,14 @@ namespace HeatingSurvey
             {
                 actPacketNum = int.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 0, 3)));
                 UInt16 sendInfo = UInt16.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 8, 4)));
-                byte repeatSend = (byte)sendInfo;
-                //byte repeatSend = (byte)(sendInfo % 10);
-                //byte timeFromLast_Min = (byte)(sendInfo / 10);
+                UInt16 repeatSend = sendInfo;
+                //byte repeatSend = (byte)sendInfo;
+                
 
                 
                 if ((sendInfo / 10) == firstAfterBootMagicNumber)     // 999 = magic number for first send after boot of sending device
                 {
-                    repeatSend = (byte)(repeatSend + 100);  // sets the first digit of info to signal first send after boot 
+                    repeatSend = (UInt16)(9000 + sendInfo % 10);  // sets the first digit of info to signal first send after boot 
                 }
                 
 
@@ -250,7 +250,7 @@ namespace HeatingSurvey
             /// RepaeatCount to succeed
             /// </summary>
             /// 
-            public byte RepeatSend
+            public UInt16 RepeatSend
             { get; private set; }
 
 
@@ -303,7 +303,7 @@ namespace HeatingSurvey
             public int RSSI
             { get; private set; }
 
-            internal DataSensorEventArgs(DateTime pTimeStamp, byte pRepeatSend, UInt32 pVal_1, UInt32 pVal_2, UInt32 pVal3, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay)
+            internal DataSensorEventArgs(DateTime pTimeStamp, UInt16 pRepeatSend, UInt32 pVal_1, UInt32 pVal_2, UInt32 pVal3, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay)
             {                
                 this.Timestamp = pTimeStamp;
                 this.Val_1 = pVal_1;

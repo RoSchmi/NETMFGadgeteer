@@ -387,7 +387,7 @@ namespace HeatingSurvey
                         property = new TableEntityProperty("TimeFromLast", nextSampleValue.TimeFromLast.Days.ToString("D3") + "-" + nextSampleValue.TimeFromLast.Hours.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Minutes.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Seconds.ToString("D2"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
 
-                        property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D3"), "Edm.String");
+                        property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D4"), "Edm.String");
                         propertiesAL.Add(makePropertyArray.result(property));
 
                         property = new TableEntityProperty("RSSI", nextSampleValue.RSSI.ToString("D3"), "Edm.String");

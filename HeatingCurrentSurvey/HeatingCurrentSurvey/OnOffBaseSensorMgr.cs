@@ -61,7 +61,7 @@ namespace HeatingSurvey
             /// RepaeatCount to succeed
             /// </summary>
             /// 
-            public byte RepeatSend
+            public UInt16 RepeatSend
             { get; private set; }
 
 
@@ -139,7 +139,7 @@ namespace HeatingSurvey
 
             
 
-            internal OnOffSensorEventArgs(InputSensorState pActState, InputSensorState pOldState, byte pRepeatSend, DateTime pTimeStamp, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay, UInt32 pVal_1 = 0, UInt32 pVal_2 = 0, UInt32 pVal_3 = 0)
+            internal OnOffSensorEventArgs(InputSensorState pActState, InputSensorState pOldState, UInt16 pRepeatSend, DateTime pTimeStamp, string pSensorLabel, string pSensorLocation, string pMeasuredQuantity, string pDestinationTable, string pChannel, bool pLastOfDay, UInt32 pVal_1 = 0, UInt32 pVal_2 = 0, UInt32 pVal_3 = 0)
             {
                 this.ActState = pActState == InputSensorState.High ? true : false;
                 this.OldState = pOldState == InputSensorState.High ? true : false;
