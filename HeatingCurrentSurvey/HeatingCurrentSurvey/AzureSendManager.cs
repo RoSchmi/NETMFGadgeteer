@@ -8,6 +8,7 @@ using System.Net;
 using RoSchmi.Net.Azure.Storage;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using RoSchmi.DayLihtSavingTime;
 
 
 namespace HeatingSurvey
@@ -20,16 +21,54 @@ namespace HeatingSurvey
         //****************  SendManager *************************************
         static int yearOfLastSend = 2000;
         static string prefixOfLastTable = "";
+
+        public static int _forcedReboots = 0;
+        public static int _badReboots = 0;
+        public static int _azureSends = 0;
+        public static int _azureSendErrors = 0;
+
+        public static int dstOffset;
+        public static string dstStart;
+        public static string dstEnd;
+
+        const double InValidValue = 999.9;
+        public static double _dayMin = 1000.00;   //don't change
+        public static double _dayMax = -1000.00;  //don't change
+        public static double _lastValue = InValidValue; // InvalidValue
+
+        static int Ch_1_Sel = 1;   // The Channel of the temp/humidity sensor (Values from 1 to 8 are allowed)
+        static int Ch_2_Sel = 2;
+        static int Ch_3_Sel = 3;
+        static int Ch_4_Sel = 4;
+        static int Ch_5_Sel = 5;
+        static int Ch_6_Sel = 6;
+        static int Ch_7_Sel = 7;
+        static int Ch_8_Sel = 8;
+
+        public static double[] _lastContent = new double[8] { InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue };
+
+        public static double _dayMinWork = 0.00;   //don't change
+        public static double _dayMaxWork = 0.00;  //don't change
+        public static double _dayMinWorkBefore = 0.00;
+        public static double _dayMaxWorkBefore = 0.00;
+
+
         public static DateTime sampleTimeOfLastSent;  // initial value is set in ProgramStarted
-        private DateTime _timeOfLastSend;
+        public static DateTime _timeOfLastSend;
+        //private DateTime _timeOfLastSend;
+        public static DateTime _timeOfLastSensorEvent;
+        public static string _lastResetCause = "";
+
+        
         public static int _iteration = 0;
-        private TimeSpan _sendInterval;
-        private int _azureSends;
+        
         private bool _useHttps = false;
         CloudStorageAccount _CloudStorageAccount;
         string _tablePrefix = "Y";
         string _sensorValueHeader = "Value";
-        string _socketSensorHeader = "SecValue";       
+        string _socketSensorHeader = "SecValue";
+
+        public static TimeSpan _sendInterval;
         TableClient table;
         X509Certificate[] caCerts;
         private bool attachFiddler = false;
@@ -192,7 +231,7 @@ namespace HeatingSurvey
 
 
         #region AzureSendManager Constructor
-        public AzureSendManager(CloudStorageAccount pCloudStorageAccount, string pTablePreFix, string pSensorValueHeader, string pSocketSensorHeader, X509Certificate[] pCaCerts, DateTime pTimeOfLastSend, TimeSpan pSendInterval, int pAzureSends, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
+        public AzureSendManager(CloudStorageAccount pCloudStorageAccount, int pTimeZoneOffset, string pDstStart, string pDstEnd, int pDstOffset, string pTablePreFix, string pSensorValueHeader, string pSocketSensorHeader, X509Certificate[] pCaCerts, DateTime pTimeOfLastSend, TimeSpan pSendInterval, int pAzureSends, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
         {
             _useHttps = pUseHttps;
             _azureSends = pAzureSends;
@@ -207,7 +246,11 @@ namespace HeatingSurvey
             fiddlerPort = pFiddlerPort;
             caCerts = pCaCerts;
             _debug = pDebugMode;
-            _debug_level = pDebugLevel;          
+            _debug_level = pDebugLevel;
+          
+            dstOffset = pDstOffset;
+            dstStart = pDstStart;
+            dstEnd = pDstEnd;
         }
         #endregion
 
@@ -218,6 +261,206 @@ namespace HeatingSurvey
             sendThread.Start();
         }
         #endregion
+
+
+        #region Method ActualizeFromLastAzureRow
+        public Counters ActualizeFromLastAzureRow(ref string pSwitchMessage)
+        {
+#if DebugPrint
+                    Debug.Print("\r\nGoing to query for Entities");
+#endif
+            // Now we query for the last row of the table as selected by the query string "$top=1"
+            // (OLS means Of the Last Send)
+            string readTimeOLS = DateTime.Now.ToString();  // shall hold send time of the last entity on Azure
+            /*
+            const string noTime = "000-00:00:00";
+            string onTimeDay = noTime;
+            string onTimeWeek = noTime;
+            string onTimeMonth = noTime;
+            string onTimeYear = noTime;
+            string cD = "0";
+            string cW = "0";
+            string cM = "0";
+            string cY = "0";
+            */
+
+            ArrayList queryArrayList = new ArrayList();
+            //myAzureSendManager_Burner = new AzureSendManager_Burner(myCloudStorageAccount, timeZoneOffset, _tablePreFix, _sensorValueHeader, _socketSensorHeader, caCerts, _timeOfLastSend, sendInterval, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
+            try { GHI.Processor.Watchdog.ResetCounter(); }
+            catch { };
+            HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList);
+
+            if (queryEntityReturnCode == HttpStatusCode.OK)
+            {
+#if DebugPrint
+                        Debug.Print("Query for entities completed. HttpStatusCode: " + queryEntityReturnCode.ToString());
+#endif
+                try { GHI.Processor.Watchdog.ResetCounter(); }
+                catch { };
+                if (queryArrayList.Count != 0)
+                {
+                    var entityHashtable = queryArrayList[0] as Hashtable;
+                    string lastBootReason = entityHashtable["bR"].ToString();
+                    if (lastBootReason == "X")     // reboot was forced by the program (not enougth free ram)
+                    {
+                        _lastResetCause = "ForcedReboot";
+                        try
+                        {
+                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString()) + 1;
+                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
+                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+                            _dayMin = double.Parse(entityHashtable["min"].ToString());
+                            _dayMax = double.Parse(entityHashtable["max"].ToString());
+                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString());
+                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
+                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+                            _dayMin = double.Parse(entityHashtable["min"].ToString());
+                            _dayMax = double.Parse(entityHashtable["max"].ToString());
+                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                        }
+                        catch { }
+                    }
+                    /*
+                    try
+                    {
+                        onTimeDay = entityHashtable["OnTimeDay"].ToString();
+                        onTimeWeek = entityHashtable["OnTimeWeek"].ToString();
+                        onTimeMonth = entityHashtable["OnTimeMonth"].ToString();
+                        onTimeYear = entityHashtable["OnTimeYear"].ToString();
+                        cD = entityHashtable["CD"].ToString();
+                        cW = entityHashtable["CW"].ToString();
+                        cM = entityHashtable["CM"].ToString();
+                        cY = entityHashtable["CY"].ToString();
+                    }
+                    catch { }
+                    */
+
+                   // _onTimeDay = new TimeSpan(int.Parse(onTimeDay.Substring(0, 3)), int.Parse(onTimeDay.Substring(4, 2)), int.Parse(onTimeDay.Substring(7, 2)), int.Parse(onTimeDay.Substring(10, 2)));
+
+                    readTimeOLS = entityHashtable["SampleTime"].ToString();
+
+                    try
+                    {
+                        _timeOfLastSend = new DateTime(int.Parse(readTimeOLS.Substring(6, 4)), int.Parse(readTimeOLS.Substring(0, 2)),
+                                                       int.Parse(readTimeOLS.Substring(3, 2)), int.Parse(readTimeOLS.Substring(11, 2)),
+                                                       int.Parse(readTimeOLS.Substring(14, 2)), int.Parse(readTimeOLS.Substring(17, 2)));
+
+                        // calculate back to the time without dayLightSavingTime offset
+                        _timeOfLastSend = _timeOfLastSend.AddMinutes(-DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, _timeOfLastSend, true));
+                    }
+                    catch
+                    {
+                        _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
+                    }
+
+                    /*
+                    try
+                    {
+                        if (_timeOfLastSend.Day == _timeOfLastSensorEvent.Day)
+                        {
+                            _onTimeDay = new TimeSpan(int.Parse(onTimeDay.Substring(0, 3)), int.Parse(onTimeDay.Substring(4, 2)), int.Parse(onTimeDay.Substring(7, 2)), int.Parse(onTimeDay.Substring(10, 2)));
+                            _onTimeWeek = new TimeSpan(int.Parse(onTimeWeek.Substring(0, 3)), int.Parse(onTimeWeek.Substring(4, 2)), int.Parse(onTimeWeek.Substring(7, 2)), int.Parse(onTimeWeek.Substring(10, 2)));
+                            _onTimeMonth = new TimeSpan(int.Parse(onTimeMonth.Substring(0, 3)), int.Parse(onTimeMonth.Substring(4, 2)), int.Parse(onTimeMonth.Substring(7, 2)), int.Parse(onTimeMonth.Substring(10, 2)));
+                            _onTimeYear = new TimeSpan(int.Parse(onTimeYear.Substring(0, 3)), int.Parse(onTimeYear.Substring(4, 2)), int.Parse(onTimeYear.Substring(7, 2)), int.Parse(onTimeYear.Substring(10, 2)));
+                            _CD = int.Parse(cD);
+                            _CW = int.Parse(cW);
+                            _CM = int.Parse(cM);
+                            _CY = int.Parse(cY);
+                        }
+                        else
+                        {
+                            _onTimeDay = new TimeSpan(0);
+                            _CD = 0;
+                            if (!((_timeOfLastSend.DayOfWeek == DayOfWeek.Sunday) && (_timeOfLastSensorEvent.DayOfWeek == DayOfWeek.Monday)))
+                            {
+                                _onTimeWeek = new TimeSpan(int.Parse(onTimeWeek.Substring(0, 3)), int.Parse(onTimeWeek.Substring(4, 2)), int.Parse(onTimeWeek.Substring(7, 2)), int.Parse(onTimeWeek.Substring(10, 2)));
+                                _CW = int.Parse(cW);
+                            }
+                            else
+                            {
+                                _onTimeWeek = new TimeSpan(0);
+                                _CW = 0;
+                            }
+                            if (_timeOfLastSend.Month == _timeOfLastSensorEvent.Month)
+                            {
+                                _onTimeMonth = new TimeSpan(int.Parse(onTimeMonth.Substring(0, 3)), int.Parse(onTimeMonth.Substring(4, 2)), int.Parse(onTimeMonth.Substring(7, 2)), int.Parse(onTimeMonth.Substring(10, 2)));
+                                _CM = int.Parse(cM);
+                            }
+                            else
+                            {
+                                _onTimeMonth = new TimeSpan(0);
+                                _CM = 0;
+                            }
+                            if (_timeOfLastSend.Year == _timeOfLastSensorEvent.Year)
+                            {
+                                _onTimeYear = new TimeSpan(int.Parse(onTimeYear.Substring(0, 3)), int.Parse(onTimeYear.Substring(4, 2)), int.Parse(onTimeYear.Substring(7, 2)), int.Parse(onTimeYear.Substring(10, 2)));
+                                _CY = int.Parse(cY);
+                            }
+                            else
+                            {
+                                _onTimeYear = new TimeSpan(0);
+                                _CY = 0;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _onTimeDay = new TimeSpan(0);
+                        _onTimeWeek = new TimeSpan(0);
+                        _onTimeMonth = new TimeSpan(0);
+                        _onTimeYear = new TimeSpan(0);
+                        _CD = 0;
+                        _CW = 0;
+                        _CM = 0;
+                        _CY = 0;
+                    }
+                    */
+                }
+                else
+                {
+                    _timeOfLastSend = DateTime.Now;
+                }
+            }
+            else
+            {
+                try { GHI.Processor.Watchdog.ResetCounter(); }
+                catch { };
+                _timeOfLastSend = DateTime.Now;
+
+
+#if DebugPrint
+                        Debug.Print("Failed to query Entities. HttpStatusCode: " + queryEntityReturnCode.ToString());
+#endif
+
+            }
+
+            pSwitchMessage = "Reboot: " + _lastResetCause;
+
+            Counters returnValue = new Counters();
+            returnValue.AzureSends = _azureSends;
+            returnValue.AzureSendErrors = _azureSendErrors;
+            returnValue.ForcedReboots = _forcedReboots;
+            returnValue.BadReboots = _badReboots;
+
+            return returnValue;
+        }
+        #endregion
+
 
         #region public Method queryTableEntities
         public HttpStatusCode queryTableEntities(string query, out ArrayList queryResult)

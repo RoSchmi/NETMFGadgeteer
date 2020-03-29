@@ -143,13 +143,13 @@ namespace HeatingSurvey
                 actPacketNum = int.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 0, 3)));
                 UInt16 sendInfo = UInt16.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 8, 4)));
                 UInt16 repeatSend = sendInfo;
-                //byte repeatSend = (byte)sendInfo;
+                
                 
 
                 
                 if ((sendInfo / 10) == firstAfterBootMagicNumber)     // 999 = magic number for first send after boot of sending device
                 {
-                    repeatSend = (UInt16)(9000 + sendInfo % 10);  // sets the first digit of info to signal first send after boot 
+                    repeatSend = (UInt16)(9000 + sendInfo % 10);  // sets the first digit of info to 9 to signal first send after boot 
                 }
                 
 
