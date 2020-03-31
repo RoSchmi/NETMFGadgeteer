@@ -272,20 +272,8 @@ namespace HeatingSurvey
             // Now we query for the last row of the table as selected by the query string "$top=1"
             // (OLS means Of the Last Send)
             string readTimeOLS = DateTime.Now.ToString();  // shall hold send time of the last entity on Azure
-            /*
-            const string noTime = "000-00:00:00";
-            string onTimeDay = noTime;
-            string onTimeWeek = noTime;
-            string onTimeMonth = noTime;
-            string onTimeYear = noTime;
-            string cD = "0";
-            string cW = "0";
-            string cM = "0";
-            string cY = "0";
-            */
-
-            ArrayList queryArrayList = new ArrayList();
-            //myAzureSendManager_Burner = new AzureSendManager_Burner(myCloudStorageAccount, timeZoneOffset, _tablePreFix, _sensorValueHeader, _socketSensorHeader, caCerts, _timeOfLastSend, sendInterval, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
+            
+            ArrayList queryArrayList = new ArrayList();           
             try { GHI.Processor.Watchdog.ResetCounter(); }
             catch { };
             HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList);
@@ -335,23 +323,7 @@ namespace HeatingSurvey
                         }
                         catch { }
                     }
-                    /*
-                    try
-                    {
-                        onTimeDay = entityHashtable["OnTimeDay"].ToString();
-                        onTimeWeek = entityHashtable["OnTimeWeek"].ToString();
-                        onTimeMonth = entityHashtable["OnTimeMonth"].ToString();
-                        onTimeYear = entityHashtable["OnTimeYear"].ToString();
-                        cD = entityHashtable["CD"].ToString();
-                        cW = entityHashtable["CW"].ToString();
-                        cM = entityHashtable["CM"].ToString();
-                        cY = entityHashtable["CY"].ToString();
-                    }
-                    catch { }
-                    */
-
-                   // _onTimeDay = new TimeSpan(int.Parse(onTimeDay.Substring(0, 3)), int.Parse(onTimeDay.Substring(4, 2)), int.Parse(onTimeDay.Substring(7, 2)), int.Parse(onTimeDay.Substring(10, 2)));
-
+                    
                     readTimeOLS = entityHashtable["SampleTime"].ToString();
 
                     try
@@ -368,68 +340,7 @@ namespace HeatingSurvey
                         _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
                     }
 
-                    /*
-                    try
-                    {
-                        if (_timeOfLastSend.Day == _timeOfLastSensorEvent.Day)
-                        {
-                            _onTimeDay = new TimeSpan(int.Parse(onTimeDay.Substring(0, 3)), int.Parse(onTimeDay.Substring(4, 2)), int.Parse(onTimeDay.Substring(7, 2)), int.Parse(onTimeDay.Substring(10, 2)));
-                            _onTimeWeek = new TimeSpan(int.Parse(onTimeWeek.Substring(0, 3)), int.Parse(onTimeWeek.Substring(4, 2)), int.Parse(onTimeWeek.Substring(7, 2)), int.Parse(onTimeWeek.Substring(10, 2)));
-                            _onTimeMonth = new TimeSpan(int.Parse(onTimeMonth.Substring(0, 3)), int.Parse(onTimeMonth.Substring(4, 2)), int.Parse(onTimeMonth.Substring(7, 2)), int.Parse(onTimeMonth.Substring(10, 2)));
-                            _onTimeYear = new TimeSpan(int.Parse(onTimeYear.Substring(0, 3)), int.Parse(onTimeYear.Substring(4, 2)), int.Parse(onTimeYear.Substring(7, 2)), int.Parse(onTimeYear.Substring(10, 2)));
-                            _CD = int.Parse(cD);
-                            _CW = int.Parse(cW);
-                            _CM = int.Parse(cM);
-                            _CY = int.Parse(cY);
-                        }
-                        else
-                        {
-                            _onTimeDay = new TimeSpan(0);
-                            _CD = 0;
-                            if (!((_timeOfLastSend.DayOfWeek == DayOfWeek.Sunday) && (_timeOfLastSensorEvent.DayOfWeek == DayOfWeek.Monday)))
-                            {
-                                _onTimeWeek = new TimeSpan(int.Parse(onTimeWeek.Substring(0, 3)), int.Parse(onTimeWeek.Substring(4, 2)), int.Parse(onTimeWeek.Substring(7, 2)), int.Parse(onTimeWeek.Substring(10, 2)));
-                                _CW = int.Parse(cW);
-                            }
-                            else
-                            {
-                                _onTimeWeek = new TimeSpan(0);
-                                _CW = 0;
-                            }
-                            if (_timeOfLastSend.Month == _timeOfLastSensorEvent.Month)
-                            {
-                                _onTimeMonth = new TimeSpan(int.Parse(onTimeMonth.Substring(0, 3)), int.Parse(onTimeMonth.Substring(4, 2)), int.Parse(onTimeMonth.Substring(7, 2)), int.Parse(onTimeMonth.Substring(10, 2)));
-                                _CM = int.Parse(cM);
-                            }
-                            else
-                            {
-                                _onTimeMonth = new TimeSpan(0);
-                                _CM = 0;
-                            }
-                            if (_timeOfLastSend.Year == _timeOfLastSensorEvent.Year)
-                            {
-                                _onTimeYear = new TimeSpan(int.Parse(onTimeYear.Substring(0, 3)), int.Parse(onTimeYear.Substring(4, 2)), int.Parse(onTimeYear.Substring(7, 2)), int.Parse(onTimeYear.Substring(10, 2)));
-                                _CY = int.Parse(cY);
-                            }
-                            else
-                            {
-                                _onTimeYear = new TimeSpan(0);
-                                _CY = 0;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _onTimeDay = new TimeSpan(0);
-                        _onTimeWeek = new TimeSpan(0);
-                        _onTimeMonth = new TimeSpan(0);
-                        _onTimeYear = new TimeSpan(0);
-                        _CD = 0;
-                        _CW = 0;
-                        _CM = 0;
-                        _CY = 0;
-                    }
-                    */
+                   
                 }
                 else
                 {
@@ -473,7 +384,6 @@ namespace HeatingSurvey
 
             string tableName = _tablePrefix + DateTime.Now.Year;
             HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, tableName, "$top=1", out queryArrayList);
-
 
             _CloudStorageAccount = new CloudStorageAccount(_CloudStorageAccount.AccountName, _CloudStorageAccount.AccountKey, useHttps: _useHttps);  // Reset Cloudstorageaccount to the original settings (http or https)
             /*
