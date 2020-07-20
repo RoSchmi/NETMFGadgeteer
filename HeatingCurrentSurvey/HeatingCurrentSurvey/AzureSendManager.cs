@@ -301,8 +301,12 @@ namespace HeatingSurvey
                             _dayMin = double.Parse(entityHashtable["min"].ToString());
                             _dayMax = double.Parse(entityHashtable["max"].ToString());
                             _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            // RoSchmi
+                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
                             _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _dayMinWorkBefore = _dayMinWork;
+                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
 
                         }
                         catch { }
@@ -318,8 +322,12 @@ namespace HeatingSurvey
                             _dayMin = double.Parse(entityHashtable["min"].ToString());
                             _dayMax = double.Parse(entityHashtable["max"].ToString());
                             _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            // RoSchmi
+                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());                         
                             _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _dayMinWorkBefore = _dayMinWork;
+                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
                         }
                         catch { }
                     }
@@ -367,6 +375,7 @@ namespace HeatingSurvey
             returnValue.AzureSendErrors = _azureSendErrors;
             returnValue.ForcedReboots = _forcedReboots;
             returnValue.BadReboots = _badReboots;
+           
 
             return returnValue;
         }

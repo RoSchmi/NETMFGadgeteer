@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.1 vom 29. March 2020, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.2 vom 20. July 2020, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -23,7 +23,7 @@
 // Änderung: Umfangreiche Änderungen mit base Klassen für AzureSendManager und SensorMgr
 // Änderung: Zusätzliche Rfm69 Empfänger
 // Änderung: Der Rowkey entspricht nun der lokalen Zeitzonen-Zeit unter Berücksichtigung der Sommerzeit
-//Der Spalte SampleTime wurde als Anhang die aktuelle Verschiebung gegenüber UTC als Anhang beigefügt
+// Der Spalte SampleTime wurde als Anhang die aktuelle Verschiebung gegenüber UTC als Anhang beigefügt
 
 // #define DebugPrint
 
@@ -698,7 +698,7 @@ namespace HeatingCurrentSurvey
                 double logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
 
                 double measuredPower = (double)e.Val_2 / 100;
-                double cutPower = (measuredPower > 400) ? 40 : (measuredPower / 10);
+                double cutPower = (measuredPower > 6000) ? 60 : (measuredPower / 100);
 
                 double measuredWork = (double)Reform_uint16_2_float32.Convert((UInt16)(e.Val_3 >> 16), (UInt16)(e.Val_3 & 0x0000FFFF));
 
@@ -782,6 +782,8 @@ namespace HeatingCurrentSurvey
                     _azureSends = _counters.AzureSends > _azureSends ? _counters.AzureSends : _azureSends;
                     _forcedReboots = _counters.ForcedReboots > _forcedReboots ? _counters.ForcedReboots : _forcedReboots;
                     _badReboots = _counters.BadReboots > _badReboots ? _counters.BadReboots : _badReboots;
+                    //_dayMinWorkBefore = _dayMinWork;
+                    //_dayMinWork = _counters.DayMinWork > _dayMinWork ? _counters.DayMinWork : _dayMinWork;
 
                     forceSend = true;
                     // actualize to consider the timedelay caused by reading from the cloud
@@ -880,8 +882,12 @@ namespace HeatingCurrentSurvey
                     _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                    // T_1 : Current
                     _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = cutPower;                        // T_2 : Power, limited to a max. Value
 
+                    // RoSchmi
                     // T_3 : Work of this day
                     _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = ((AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork) <= 0) ? 0.00 : AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork;
+                    _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble *= 20;    // change scale
+
+
                     _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble = measuredPower;                   // T_4 : Power
                     _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble = measuredWork;                    // T_5 : Work
                     _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble = AzureSendManager._dayMinWork;    // T_6 : Work at start of day

@@ -9,6 +9,7 @@ namespace HeatingSurvey
             public int ForcedReboots { get; set; }
             public int BadReboots { get; set; }
             public int AzureSendErrors { get; set; }
+            
 
             // Initialization with this constructor did not work ( Compiler error? )
             /*
