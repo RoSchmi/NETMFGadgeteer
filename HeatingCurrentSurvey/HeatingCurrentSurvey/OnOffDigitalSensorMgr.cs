@@ -104,7 +104,11 @@ namespace HeatingSurvey
                     if (actTime.Hour == 23 && actTime.Minute == 59 && actTime.Second > 30)
                     {
                         actState = InputSensorState.High;
-                        OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now, SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, true));
+
+                        // RoSchmi
+                        //OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, DateTime.Now, SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, true));
+                        OnDigitalOnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, 0x00, actTime, SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, true));
+
                         oldState = InputSensorState.High;
                         try { GHI.Processor.Watchdog.ResetCounter(); }
                         catch { };

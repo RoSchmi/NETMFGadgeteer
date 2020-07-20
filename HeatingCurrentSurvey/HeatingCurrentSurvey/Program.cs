@@ -971,6 +971,9 @@ namespace HeatingCurrentSurvey
 
                         //RoSchmi
                         // if last send was yesterday: write 
+                        var last = copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1).Day;
+
+                        var theAct = timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day;
                         
                         if (copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)      
                         {
@@ -1766,7 +1769,7 @@ namespace HeatingCurrentSurvey
                 #endregion
 
 
-            //_iteration++;
+           
 
             #region Check if we still have enough free ram (memory leak in https) and evtl. prepare for resetting the mainboard
             uint remainingRam = Debug.GC(false);            // Get remaining Ram because of the memory leak in https
@@ -1926,6 +1929,9 @@ namespace HeatingCurrentSurvey
                 AzureSendManager_Burner._iteration++;
 
 
+               // copyTimeOfLastSend.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, 
+                              //  copyTimeOfLastSend, true))
+
                 OnOffSample theRow = new OnOffSample(partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, e.ActState ? "Off" : "On", e.OldState ? "Off" : "On", e.SensorLocation, timeFromLastSend, AzureSendManager_Burner._onTimeDay, AzureSendManager_Burner._CD, AzureSendManager_Burner._onTimeWeek, AzureSendManager_Burner._CW, AzureSendManager_Burner._onTimeMonth, AzureSendManager_Burner._CM, AzureSendManager_Burner._onTimeYear, AzureSendManager_Burner._CY, AzureSendManager_Burner._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, switchMessage);              
                 
                 if (AzureSendManager_Burner.hasFreePlaces())
@@ -1955,7 +1961,7 @@ namespace HeatingCurrentSurvey
                     Debug.Print("\r\nRow was sent on its way to Azure (Burner)");
                     myAzureSendManager_Burner.Start();
 
-                    if (e.LastOfDay)   // Write the last méssage of the day to a separate table where the TableName is augmented with "Days" (eg. TestDays2018)                  
+                    if (e.LastOfDay)   // Write the last message of the day to a separate table where the TableName is augmented with "Days" (eg. TestDays2018)                  
                     {
                         myAzureSendManager_Burner = new AzureSendManager_Burner(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, e.DestinationTable + "Days", e.MeasuredQuantity, "", caCerts, copyTimeOfLastSend, sendInterval_Burner, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
                         myAzureSendManager_Burner.AzureCommandSend += myAzureSendManager_Burner_AzureCommandSend;

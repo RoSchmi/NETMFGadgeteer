@@ -432,8 +432,6 @@ namespace HeatingSurvey
         #endregion
 
 
-
-
         #region Method ActualizeFromLastAzureRow
         public  Counters ActualizeFromLastAzureRow(ref string pSwitchMessage)
         {
@@ -617,8 +615,6 @@ namespace HeatingSurvey
         }
         #endregion
 
-
-
         #region public Method queryTableEntities
         public static HttpStatusCode queryTableEntities(string query, out ArrayList queryResult)
         {
@@ -643,7 +639,6 @@ namespace HeatingSurvey
             return queryEntityReturnCode;
         }
         #endregion
-
 
         #region private method queryTableEntities
         private static HttpStatusCode queryTableEntities(CloudStorageAccount pCloudStorageAccount, string tableName, string query, out ArrayList queryResult)
