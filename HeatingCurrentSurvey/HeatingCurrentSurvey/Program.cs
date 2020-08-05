@@ -124,8 +124,8 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_Solar = new TimeSpan(0, 0, 1);
         private static TimeSpan sendInterval_Current = new TimeSpan(0, 0, 1);
         // RoSchmi
-        private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
-        //private static bool workWithWatchDog = false; 
+        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec     
 
@@ -698,6 +698,7 @@ namespace HeatingCurrentSurvey
                 double logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
 
                 double measuredPower = (double)e.Val_2 / 100;
+                
                 double cutPower = (measuredPower > 6000) ? 60 : (measuredPower / 100);
 
                 double measuredWork = (double)Reform_uint16_2_float32.Convert((UInt16)(e.Val_3 >> 16), (UInt16)(e.Val_3 & 0x0000FFFF));

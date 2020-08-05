@@ -170,15 +170,20 @@ namespace HeatingSurvey
                     UInt32 work = (UInt32)((UInt32)e.receivedData[26] | (UInt32)e.receivedData[25] << 8 | (UInt32)e.receivedData[24] << 16 | (UInt32)e.receivedData[23] << 24);
                   
                                      
-                    if (cmdChar == '0' || cmdChar == '1')
+                    if (cmdChar == '0' || cmdChar == '1')      // Comes from Pump on/off sensor
                     {
                         actState = cmdChar == '1' ? InputSensorState.High : InputSensorState.Low;
                         oldState = oldChar == '1' ? InputSensorState.High : InputSensorState.Low;
                         OnRfm69OnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, repeatSend, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false, current, power, work));
                     }
-                    else
+                    if (cmdChar == '2')                          // Comes from current sensor    
                     {
                         OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
+                    }
+                    if (cmdChar == '3')                          // Comes from solar temperature sensor (Collector, Storage, Water)  
+                    {
+                        // Destination Table is changed to "EscapeTableLocation_03"
+                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
                     }
                 }
             }
