@@ -174,15 +174,22 @@ namespace HeatingSurvey
                     {
                         actState = cmdChar == '1' ? InputSensorState.High : InputSensorState.Low;
                         oldState = oldChar == '1' ? InputSensorState.High : InputSensorState.Low;
+                        /*  Used for tests
+                        if (current == 3122)
+                        {
+                            current = 3010;
+                        }
+                        */
                         OnRfm69OnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, repeatSend, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false, current, power, work));
                     }
                     if (cmdChar == '2')                          // Comes from current sensor    
                     {
+                        
                         OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
                     }
                     if (cmdChar == '3')                          // Comes from solar temperature sensor (Collector, Storage, Water)  
                     {
-                        // Destination Table is changed to "EscapeTableLocation_03"
+                        // Destination Table is changed to "EscapeTableLocation_03" (Magic String)
                         OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
                     }
                 }
