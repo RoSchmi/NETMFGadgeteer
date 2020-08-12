@@ -35,6 +35,8 @@ namespace HeatingSurvey
         const double InValidValue = 999.9;
         public static double _dayMin = 1000.00;   //don't change
         public static double _dayMax = -1000.00;  //don't change
+        public static double _dayMin_3 = 1000.00;   //don't change
+        public static double _dayMax_3 = -1000.00;  //don't change
         public static double _lastValue = InValidValue; // InvalidValue
 
         static int Ch_1_Sel = 1;   // The Channel of the temp/humidity sensor (Values from 1 to 8 are allowed)
@@ -58,10 +60,12 @@ namespace HeatingSurvey
         public static DateTime _timeOfLastSend;
         //private DateTime _timeOfLastSend;
         public static DateTime _timeOfLastSensorEvent;
+        public static DateTime _timeOfLastSensorEvent_3;
         public static string _lastResetCause = "";
 
         
         public static int _iteration = 0;
+        public static int _iteration_3 = 0;
         
         private bool _useHttps = false;
         CloudStorageAccount _CloudStorageAccount;
@@ -265,7 +269,7 @@ namespace HeatingSurvey
 
 
         #region Method ActualizeFromLastAzureRow
-        public Counters ActualizeFromLastAzureRow(ref string pSwitchMessage)
+        public Counters ActualizeFromLastAzureRow(ref string pSwitchMessage, string pTableName)
         {
 #if DebugPrint
                     Debug.Print("\r\nGoing to query for Entities");
@@ -277,7 +281,7 @@ namespace HeatingSurvey
             ArrayList queryArrayList = new ArrayList();           
             try { GHI.Processor.Watchdog.ResetCounter(); }
             catch { };
-            HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList);
+            HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList, pTableName);
 
             if (queryEntityReturnCode == HttpStatusCode.OK)
             {
@@ -286,6 +290,7 @@ namespace HeatingSurvey
 #endif
                 try { GHI.Processor.Watchdog.ResetCounter(); }
                 catch { };
+                // RoSchmi: Null reference exception occured here, unknown reason
                 if (queryArrayList.Count != 0)
                 {
                     var entityHashtable = queryArrayList[0] as Hashtable;
@@ -299,8 +304,10 @@ namespace HeatingSurvey
                             _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
                             _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
                             _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+
                             _dayMin = double.Parse(entityHashtable["min"].ToString());
                             _dayMax = double.Parse(entityHashtable["max"].ToString());
+
                             _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
                             // RoSchmi
                             //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
@@ -320,8 +327,10 @@ namespace HeatingSurvey
                             _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
                             _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
                             _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+
                             _dayMin = double.Parse(entityHashtable["min"].ToString());
                             _dayMax = double.Parse(entityHashtable["max"].ToString());
+
                             _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
                             // RoSchmi
                             //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
@@ -384,7 +393,7 @@ namespace HeatingSurvey
 
 
         #region public Method queryTableEntities
-        public HttpStatusCode queryTableEntities(string query, out ArrayList queryResult)
+        public HttpStatusCode queryTableEntities(string query, out ArrayList queryResult, string pTableName)
         {
             // Now we query for the last row of the table as selected by the query string "$top=1"
             ArrayList queryArrayList = new ArrayList();
@@ -392,8 +401,11 @@ namespace HeatingSurvey
             //This operation does not work with https, so the CloudStorageAccount is set to use http
             _CloudStorageAccount = new CloudStorageAccount(_CloudStorageAccount.AccountName, _CloudStorageAccount.AccountKey, useHttps: false);
 
-            string tableName = _tablePrefix + DateTime.Now.Year;
-            HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, tableName, "$top=1", out queryArrayList);
+            //string tableName = _tablePrefix + DateTime.Now.Year;
+
+            //HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, tableName, "$top=1", out queryArrayList);
+            HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, pTableName, "$top=1", out queryArrayList);
+
 
             _CloudStorageAccount = new CloudStorageAccount(_CloudStorageAccount.AccountName, _CloudStorageAccount.AccountKey, useHttps: _useHttps);  // Reset Cloudstorageaccount to the original settings (http or https)
             /*
@@ -439,7 +451,7 @@ namespace HeatingSurvey
                     if (nextSampleValueIsNull)
                     {
                         this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, "Buffer empty"));
-                        Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
+                        //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
                         break;
                     }
                     if (!nextSampleValueShallBeSent)
@@ -517,17 +529,6 @@ namespace HeatingSurvey
                         Thread.Sleep(3000);
                     }
                     #endregion
-
-                    /*
-                    Debug.Print("\r\nTable Prefixes are: ");
-                    for (int i = 0; i < LastTablePrefixes.Count; i++ )
-                    {
-
-                        Debug.Print((string)LastTablePrefixes[i]);
-
-                    }
-                    */
-
 
                         #region Create an ArrayList  to hold the properties of the entity
                         this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, "Going to insert Entity"));
@@ -625,7 +626,7 @@ namespace HeatingSurvey
                     string insertEtag = null;
 
                     //RoSchmi
-                    Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
+                    //Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
 
                     lock (theLock)
                     {
@@ -691,7 +692,7 @@ namespace HeatingSurvey
                                 {
                                     yearOfLastSend = 2000;
                                     this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, "Failed to insert Entity, one try"));
-                                    Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
+                                    //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
                                     Thread.Sleep(3000);
                                     loopCtr++;
                                 }
@@ -720,7 +721,7 @@ namespace HeatingSurvey
                         }
                     Thread.Sleep(1);
                 }
-                Debug.Print("\r\nJumped out of while loop\r\n");
+                //Debug.Print("\r\nJumped out of while loop\r\n");
 
                 //Debug.Print("Count in buffer when entering AzureSendManager = " + Count);
 
