@@ -300,14 +300,7 @@ namespace HeatingSurvey
                     Debug.Print("queryArralist is not null");
                 }
 
-                if (queryArrayList[0] == null)
-                {
-                    Debug.Print("queryArralist[0] is null");
-                }
-                else
-                {
-                    Debug.Print("queryArralist[0] is not null");
-                }
+                
 
 
 
@@ -657,7 +650,7 @@ namespace HeatingSurvey
                     string insertEtag = null;
 
                     //RoSchmi
-                    Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
+                    //Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
 
                     lock (theLock)
                     {
