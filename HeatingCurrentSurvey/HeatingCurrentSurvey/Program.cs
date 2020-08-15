@@ -54,6 +54,9 @@ using RoSchmi.ButtonNETMF;
 using RoSchmi.DayLihtSavingTime;
 using RoSchmi.RFM69_NETMF;
 using RoSchmi.Utilities;
+using PervasiveDigital;
+using PervasiveDigital.Json;
+//using HeatingCurrentSurvey;
 
 
 namespace HeatingCurrentSurvey

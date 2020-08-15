@@ -42,15 +42,6 @@
     <Compile Include="OnOffRfm69SensorMgr.cs" />
     <Compile Include="OnOffSample.cs" />
     <Compile Include="OnOffSampleBase.cs" />
-    <Compile Include="PervasiveDigital\Json\BsonTypes.cs" />
-    <Compile Include="PervasiveDigital\Json\JArray.cs" />
-    <Compile Include="PervasiveDigital\Json\JObject.cs" />
-    <Compile Include="PervasiveDigital\Json\JProperty.cs" />
-    <Compile Include="PervasiveDigital\Json\JsonConverter.cs" />
-    <Compile Include="PervasiveDigital\Json\JToken.cs" />
-    <Compile Include="PervasiveDigital\Json\JValue.cs" />
-    <Compile Include="PervasiveDigital\Json\SerializationUtilities.cs" />
-    <Compile Include="PervasiveDigital\Json\TimeExtensions.cs" />
     <Compile Include="PervasiveDigital\Security\ManagedProviders\HMACSHA256.cs" />
     <Compile Include="PervasiveDigital\Security\ManagedProviders\IHashAlgorithm.cs" />
     <Compile Include="PervasiveDigital\Security\ManagedProviders\Sha2.cs" />
@@ -91,6 +82,9 @@
     <Reference Include="GHI.Hardware, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="GHI.Networking, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="GHI.Pins, Version=4.3.8.1, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="JSON_NETMF_Dll">
+      <HintPath>..\JSON_NETMF_Dll\bin\Debug\JSON_NETMF_Dll.dll</HintPath>
+    </Reference>
     <Reference Include="MFDpwsExtensions" />
     <Reference Include="Microsoft.SPOT.Graphics" />
     <Reference Include="Microsoft.SPOT.Hardware" />
