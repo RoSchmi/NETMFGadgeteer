@@ -37,6 +37,7 @@ namespace HeatingSurvey
         #endregion
 
         int lastPacketNum = -1;
+        int lastPacketNum_3 = -1;
         int actPacketNum = 0;
 
         string DestinationTableContinuous;
@@ -147,10 +148,11 @@ namespace HeatingSurvey
                 {
                     repeatSend = (UInt16)(9000 + sendInfo % 10);  // sets the first digit of info to 9 to signal first send after boot 
                 }
-                
 
 
                 
+
+                //int selectedPacketNum = cmdChar == '3' ? lastPacketNum_3 : lastPacketNum;
                 if (actPacketNum != lastPacketNum)
                 {
                     lastPacketNum = actPacketNum;

@@ -254,14 +254,14 @@ namespace HeatingSurvey
                         }
                     if (nextSampleValueIsNull)
                     {
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, "Buffer empty"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, tableName + _Buffer_empty));
                         //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
                         break;
                     }
                     if (!nextSampleValueShallBeSent)
                     {
                         nextSampleValue = DequeueNextSampleValue();    // Discard this to early object
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, "Early object discarded"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, tableName + _Early_object_discarded));
                     }
 
                     #region Create a Azure Table, Name = _tablePrefix plus the actual year (only when needed)
@@ -280,7 +280,7 @@ namespace HeatingSurvey
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
                             //Debug.Print("Table was created: " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, "Table created"));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, tableName + _Table_created));
                             yearOfLastSend = actYear;
                             prefixOfLastTable = _tablePrefix;
                         }
@@ -291,7 +291,7 @@ namespace HeatingSurvey
                                 //Debug.Print("Table " + tableName + " already exists");
                                 yearOfLastSend = actYear;
                                 prefixOfLastTable = _tablePrefix;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, "Table already exists" ));
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
                             }
                             else
                             {
@@ -304,7 +304,7 @@ namespace HeatingSurvey
                                 else
                                 {
                                     //Debug.Print("Failed to create Table " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, "Failed to create Table"));
+                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
                                     Thread.Sleep(10000);
                                     Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
                                     while (true)
@@ -320,7 +320,7 @@ namespace HeatingSurvey
                     #endregion
 
                     #region Create an ArrayList  to hold the properties of the entity
-                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, "Going to insert Entity"));
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, tableName + _Going_to_insert_Entity));
                     //Debug.Print("\r\nGoing to insert an entity");
                     // Now we create an Arraylist to hold the properties of a table Row,
                     // write these items to an entity
@@ -383,7 +383,7 @@ namespace HeatingSurvey
                             }
                             
                        
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, "Entity was inserted"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, tableName + _Entity_was_inserted));
 
                          // don't break, the loop is left when we try to get the next row until it is null
                     }

@@ -330,10 +330,11 @@ namespace HeatingCurrentSurvey
         private static AzureSendManager myAzureSendManager;
 
         string lastOutString = string.Empty;
-
+        
         static SensorValue[] _sensorValueArr = new SensorValue[8];
         static SensorValue[] _sensorValueArr_last_1 = new SensorValue[8];
         static SensorValue[] _sensorValueArr_last_2 = new SensorValue[8];
+        
         static SensorValue[] _sensorValueArr_Out = new SensorValue[8];
        
 
@@ -346,7 +347,7 @@ namespace HeatingCurrentSurvey
         public static void Main()
         {
 
-            Debug.Print(Resources.GetString(Resources.StringResources.String1));
+           // Debug.Print(Resources.GetString(Resources.StringResources.String1));
 
             #region Save last Reset Cause (Watchdog or Power/Reset)
             _lastResetCause = " PowerOrReset";
@@ -357,7 +358,9 @@ namespace HeatingCurrentSurvey
             }
             if (GHI.Processor.Watchdog.Enabled)
             {
+#if DebugPrint
                 Debug.Print("Watchdog disabled");
+#endif
                 GHI.Processor.Watchdog.Disable();
             }
             #endregion
@@ -380,7 +383,9 @@ namespace HeatingCurrentSurvey
             }
             catch (Exception ex1)
             {
+#if DebugPrint
                 Debug.Print("\r\nSD-Card not mounted! " + ex1.Message);
+#endif
             }
             #endregion
 
@@ -480,7 +485,9 @@ namespace HeatingCurrentSurvey
                     }
                     else
                     {
+#if DebugPrint
                         Debug.Print("Storage is not formatted. " + "Format on PC with FAT32/FAT16 first!");
+#endif
                     }
                     try
                     {
@@ -490,7 +497,9 @@ namespace HeatingCurrentSurvey
                 }
                 catch (Exception ex)
                 {
+#if DebugPrint
                     Debug.Print("SD-Card not opened! " + ex.Message);
+#endif
                 }
             }
             #endregion
@@ -542,7 +551,9 @@ namespace HeatingCurrentSurvey
                 netif.EnableDynamicDns();
                 while (netif.IPAddress == "0.0.0.0")
                 {
+#if DebugPrint
                     Debug.Print("Wait DHCP");
+#endif
                     Thread.Sleep(300);
                 }
                 _hasAddress = true;
@@ -883,7 +894,7 @@ namespace HeatingCurrentSurvey
 
                 DateTime copyTimeOfLastSend = AzureSendManager._timeOfLastSend;
 
-                //copyTimeOfLastSend = copyTimeOfLastSend.AddDays(-1);
+                
 
                 TimeSpan timeFromLastSend = timeOfThisEvent - copyTimeOfLastSend;
 
@@ -1018,8 +1029,8 @@ namespace HeatingCurrentSurvey
 
                             int iterationAct = tablePreFix == e.DestinationTable ? AzureSendManager._iteration : AzureSendManager._iteration_3;
 
-                            
-                            theRow = new SampleValue(tablePreFix, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, dayMinAct, dayMaxAct,
+
+                            theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, dayMinAct, dayMaxAct,
                            _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
                            _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
                            _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_3_Sel - 1].RandomId, _sensorValueArr_Out[Ch_3_Sel - 1].Hum, _sensorValueArr_Out[Ch_3_Sel - 1].BatteryIsLow,
@@ -1495,7 +1506,10 @@ namespace HeatingCurrentSurvey
                     // Debug.Print("\r\nRfm69 event, State: " + e.ActState.ToString() + ", RepeatCount: " + e.RepeatSend.ToString());
                     Debug.Print("\r\nRow was sent on its way to Azure (Solar)");
                     myAzureSendManager_Solar.Start();
-                    Thread.Sleep(40000);
+                    // RoSchmi
+                    //Thread.Sleep(40000);
+                    Thread.Sleep(5000);
+
 
                     if (e.LastOfDay)   // Write the last méssage of the day to a separate table where the TableName is augmented with "Days" (eg. TestDays2018)                  
                     {
@@ -1506,7 +1520,7 @@ namespace HeatingCurrentSurvey
                         try { GHI.Processor.Watchdog.ResetCounter(); }
                         catch { };
                         //_Print_Debug("\r\nRow was sent on its way to Azure");
-                        Debug.Print("\r\nLast Row of day was sent on its way to Azure");
+                        //Debug.Print("\r\nLast Row of day was sent on its way to Azure");
                         myAzureSendManager_Solar.Start();
                     }
 

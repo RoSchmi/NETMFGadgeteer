@@ -221,7 +221,7 @@ namespace HeatingSurvey
 
         #region public method Start sending contents of buffer
         public void Start()
-        {
+        {     
             Thread sendThread = new Thread(new ThreadStart(runSendThread));
             sendThread.Start();
         }
@@ -230,7 +230,7 @@ namespace HeatingSurvey
         
 
         #region runSendThread
-        public void runSendThread()
+        public void runSendThread()       // Azure SendManager_Solar
         {
                 OnOffSample nextSampleValue;
                 HttpStatusCode createTableReturnCode;
@@ -251,16 +251,16 @@ namespace HeatingSurvey
                         {
                             nextSampleValueShallBeSent = (nextSampleValue.ForceSend || ((nextSampleValue.TimeOfSample - sampleTimeOfLastSent) > _sendInterval)) ? true : false;
                         }
-                    if (nextSampleValueIsNull)
+                        if (nextSampleValueIsNull)              // Azure SendManager_Solar
                     {
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, "Buffer empty"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, tableName + _Buffer_empty));
                         //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
                         break;
                     }
                     if (!nextSampleValueShallBeSent)
                     {
                         nextSampleValue = DequeueNextSampleValue();    // Discard this to early object
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, "Early object discarded"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, tableName + _Early_object_discarded));
                     }
 
                     #region Create a Azure Table, Name = _tablePrefix plus the actual year (only when needed)
@@ -279,7 +279,7 @@ namespace HeatingSurvey
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
                             //Debug.Print("Table was created: " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, "Table created"));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, tableName + _Table_created));
                             yearOfLastSend = actYear;
                             prefixOfLastTable = _tablePrefix;
                         }
@@ -290,7 +290,7 @@ namespace HeatingSurvey
                                 //Debug.Print("Table " + tableName + " already exists");
                                 yearOfLastSend = actYear;
                                 prefixOfLastTable = _tablePrefix;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, "Table already exists" ));
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists ));
                             }
                             else
                             {
@@ -303,7 +303,7 @@ namespace HeatingSurvey
                                 else
                                 {
                                     //Debug.Print("Failed to create Table " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, "Failed to create Table"));
+                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
                                     Thread.Sleep(10000);
                                     Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
                                     while (true)
@@ -319,7 +319,7 @@ namespace HeatingSurvey
                     #endregion
 
                     #region Create an ArrayList  to hold the properties of the entity
-                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, "Going to insert Entity"));
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, tableName + _Going_to_insert_Entity));
                     //Debug.Print("\r\nGoing to insert an entity");
                     // Now we create an Arraylist to hold the properties of a table Row,
                     // write these items to an entity
@@ -369,7 +369,7 @@ namespace HeatingSurvey
                            //*********************************************************
                     #endregion
 
-                    if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent))
+                    if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent) || (insertEntityReturnCode == HttpStatusCode.Conflict))
                     {
                         //Debug.Print("Entity was inserted. Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
                         
@@ -379,14 +379,43 @@ namespace HeatingSurvey
                                 if (!nextSampleValue.ForceSend)
                                 { sampleTimeOfLastSent = nextSampleValue.TimeOfSample; }
                             }
+
                             
-                       
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, "Entity was inserted"));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, tableName + ((insertEntityReturnCode == HttpStatusCode.Conflict) ? _Entity_already_created_deleted_from_buffer : _Entity_was_inserted) + reverseDate));
+                           
+
 
                          // don't break, the loop is left when we try to get the next row until it is null
                     }
                     else
                     {
+                        /*
+                        if (insertEntityReturnCode == HttpStatusCode.Ambiguous) // this is returned when no contact to internet
+                        {
+                            yearOfLastSend = 2000;
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, "No Internet access"));
+                            //Debug.Print("Leaving because of no internet access. Count in buffer when leaving AzureSendManager = " + Count);
+                            break;
+                        }
+                        else
+                        {
+                            if (insertEntityReturnCode == HttpStatusCode.Conflict) // this is returned when entity is already stored in the cloud
+                            {
+                                nextSampleValue = DequeueNextSampleValue();
+                                Thread.Sleep(0);
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
+                            }
+                            else
+                            {
+                                yearOfLastSend = 2000;
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
+                                //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
+                                Thread.Sleep(3000);
+                                loopCtr++;
+                            }
+                        }
+                        */
+                        
                         if (insertEntityReturnCode == HttpStatusCode.Ambiguous) // this is returned when no contact to internet
                         {
                             yearOfLastSend = 2000;
@@ -397,11 +426,13 @@ namespace HeatingSurvey
                         else
                         {
                             yearOfLastSend = 2000;
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, "Failed to insert Entity, one try"));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, "Failed to insert Entity, one try" + reverseDate));
                             //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
                             Thread.Sleep(3000);
                             loopCtr++;
                         }
+                        
+
                     }
 
                     if (loopCtr >= 3)           // if Azure does not accept the entity, we give up after the third try and discard this entity

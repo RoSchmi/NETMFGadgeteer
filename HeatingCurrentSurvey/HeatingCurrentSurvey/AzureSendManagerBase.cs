@@ -26,6 +26,17 @@ namespace HeatingSurvey
 
         internal static readonly object theLock = new object();
 
+        // Strings used mulziple times (saves Code)
+        internal static string _Going_to_insert_Entity = ": Going to insert Entity ";
+        internal static string _Table_already_exists = ": Table already exists";
+        internal static string _Table_created = ": Table created";
+        internal static string _Failed_to_create_Table = ": Failed to create Table";
+        internal static string _Buffer_empty = ": Buffer empty";
+        internal static string _Early_object_discarded = ": Early object discarded";
+        internal static string _Entity_was_inserted = ": Entity was inserted ";
+        internal static string _Entity_already_created_deleted_from_buffer = ": Entity already created, deleted from buffer ";
+
+
         
 
         public AzureSendManagerBase(CloudStorageAccount pCloudStorageAccount, int pTimeZoneOffset, string pDstStart, string pDstEnd, int pDstOffset, X509Certificate[] pCaCerts, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
@@ -44,8 +55,7 @@ namespace HeatingSurvey
             dstOffset = pDstOffset;
         }
 
-       
-
+        
         #region method createTable
         internal HttpStatusCode createTable(CloudStorageAccount pCloudStorageAccount, string pTableName)
         {
@@ -61,7 +71,7 @@ namespace HeatingSurvey
             return resultCode;
         }
         #endregion
-
+        
        
         internal ArrayList createOnOffPropertyArrayList(OnOffSample nextSampleValue, int azureSends)
         {

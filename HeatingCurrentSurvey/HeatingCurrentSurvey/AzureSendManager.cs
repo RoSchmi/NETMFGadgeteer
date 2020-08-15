@@ -13,7 +13,7 @@ using RoSchmi.DayLihtSavingTime;
 
 namespace HeatingSurvey
 {
-    class AzureSendManager
+    class AzureSendManager : AzureSendManagerBase
     {
         private static readonly object theLock = new object();
 
@@ -237,6 +237,7 @@ namespace HeatingSurvey
 
         #region AzureSendManager Constructor
         public AzureSendManager(CloudStorageAccount pCloudStorageAccount, int pTimeZoneOffset, string pDstStart, string pDstEnd, int pDstOffset, string pTablePreFix, string pSensorValueHeader, string pSocketSensorHeader, X509Certificate[] pCaCerts, DateTime pTimeOfLastSend, TimeSpan pSendInterval, int pAzureSends, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
+            : base(pCloudStorageAccount, pTimeZoneOffset, pDstStart, pDstEnd, pDstOffset, pCaCerts, pDebugMode, pDebugLevel, pFiddlerIPAddress, pAttachFiddler, pFiddlerPort, pUseHttps)
         {
             _useHttps = pUseHttps;
             _azureSends = pAzureSends;
@@ -451,14 +452,15 @@ namespace HeatingSurvey
         #endregion
 
         #region runSendThread
-        public void runSendThread()
+        public void runSendThread()             // AzureSendManager
         {
                 SampleValue nextSampleValue;
                 HttpStatusCode createTableReturnCode;
                 HttpStatusCode insertEntityReturnCode = HttpStatusCode.Ambiguous;
-                int actYear = DateTime.Now.Year;
-                // RoSchmi
-                string tableName = _tablePrefix + actYear.ToString();
+                string actYear = DateTime.Now.Year.ToString();
+
+
+                string tableName = _tablePrefix + actYear;
                 string tablePreFix = _tablePrefix;
                 
                 bool nextSampleValueIsNull = false;
@@ -470,9 +472,9 @@ namespace HeatingSurvey
                         nextSampleValue = PreViewNextSampleValue();
                         nextSampleValueIsNull = (nextSampleValue == null) ? true : false;
                         if (nextSampleValue != null)
-                        {
-                            tableName = nextSampleValue.TablePreFix + actYear.ToString();
-                            tablePreFix = nextSampleValue.TablePreFix;
+                        {                      
+                            tableName = nextSampleValue.TableName;
+                            tablePreFix = tableName.Substring(tableName.Length - 5);                         
                         }
                         nextSampleValueShallBeSent = false;
                         if (!nextSampleValueIsNull)
@@ -481,23 +483,24 @@ namespace HeatingSurvey
                         }
                     if (nextSampleValueIsNull)
                     {
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, "Buffer empty"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, tableName + _Buffer_empty));
                         //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
                         break;
                     }
                     if (!nextSampleValueShallBeSent)
                     {
                         nextSampleValue = DequeueNextSampleValue();    // Discard this to early object
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, "Early object discarded"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, tableName + _Early_object_discarded));
                     }
 
                     #region Create a Azure Table, Name = tablePrefix plus the actual year (only when needed)
-                    //if ((DateTime.Now.Year != yearOfLastSend) || (_tablePrefix != prefixOfLastTable))
+                    
                     if ((DateTime.Now.Year != yearOfLastSend) || (!LastTablePrefixes.Contains(tablePreFix)))
                     {
-                        actYear = DateTime.Now.Year;
+                        //actYear = DateTime.Now.Year;
 
-                        tableName = nextSampleValue.TablePreFix + actYear.ToString();
+                        //tableName = nextSampleValue.TablePreFix + actYear.ToString();
+                        tableName = nextSampleValue.TableName;
 
                         createTableReturnCode = createTable(_CloudStorageAccount, tableName);
 
@@ -506,14 +509,16 @@ namespace HeatingSurvey
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
                             //Debug.Print("Table was created: " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                            
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, "Table created"));
-                            yearOfLastSend = actYear;
+
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, tableName + _Table_created));
+                            //yearOfLastSend = actYear;
+                            yearOfLastSend = DateTime.Now.Year;
+
                             //prefixOfLastTable = _tablePrefix;
-                            prefixOfLastTable = nextSampleValue.TablePreFix;
-                            if (!LastTablePrefixes.Contains(nextSampleValue.TablePreFix))
+                            prefixOfLastTable = nextSampleValue.TableName.Substring(tableName.Length - 5);
+                            if (!LastTablePrefixes.Contains(prefixOfLastTable))
                             {
-                                LastTablePrefixes.Add(nextSampleValue.TablePreFix);
+                                LastTablePrefixes.Add(prefixOfLastTable);
                             }
                             
                         }
@@ -525,26 +530,26 @@ namespace HeatingSurvey
 
 
                                 //prefixOfLastTable = _tablePrefix;
-                                prefixOfLastTable = nextSampleValue.TablePreFix;
-                                if (!LastTablePrefixes.Contains(nextSampleValue.TablePreFix))
+                                prefixOfLastTable = nextSampleValue.TableName.Substring(tableName.Length - 5);
+                                if (!LastTablePrefixes.Contains(prefixOfLastTable))
                                 {
-                                    LastTablePrefixes.Add(nextSampleValue.TablePreFix);
+                                    LastTablePrefixes.Add(prefixOfLastTable);
                                 }
 
-                                yearOfLastSend = actYear;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, "Table already exists" ));
+                                yearOfLastSend = DateTime.Now.Year;
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
                             }
                             else
                             {
                                 if (createTableReturnCode == HttpStatusCode.NoContent)
                                 {
                                     //Debug.Print("Create Table operation. HttpStatusCode: " + createTableReturnCode.ToString());
-                                    yearOfLastSend = actYear;
+                                    yearOfLastSend = DateTime.Now.Year; 
                                 }
                                 else
                                 {
                                     //Debug.Print("Failed to create Table " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, "Failed to create Table"));
+                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
                                     Thread.Sleep(10000);
                                     Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
                                     while (true)
@@ -562,7 +567,7 @@ namespace HeatingSurvey
                     #endregion
 
                         #region Create an ArrayList  to hold the properties of the entity
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, "Going to insert Entity"));
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, tableName + _Going_to_insert_Entity));
                     //Debug.Print("\r\nGoing to insert an entity");
                     // Now we create an Arraylist to hold the properties of a table Row,
                     // write these items to an entity
@@ -685,7 +690,7 @@ namespace HeatingSurvey
 
 
 
-                        if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent))
+                        if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent) || (insertEntityReturnCode == HttpStatusCode.Conflict))
                         {
                             //Debug.Print("Entity was inserted. Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
 
@@ -697,8 +702,14 @@ namespace HeatingSurvey
                                 { sampleTimeOfLastSent = nextSampleValue.TimeOfSample; }
                             }
 
-
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, "Entity was inserted"));
+                            if (insertEntityReturnCode == HttpStatusCode.Conflict)
+                            {
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
+                            }
+                            else
+                            {
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, tableName + _Entity_was_inserted + reverseDate));
+                            }
 
                             // don't break, the loop is left when we try to get the next row until it is null
                         }
@@ -713,20 +724,28 @@ namespace HeatingSurvey
                             }
                             else
                             {
+                                yearOfLastSend = 2000;
+                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
+                                //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
+                                Thread.Sleep(3000);
+                                loopCtr++;
+
+                                /*
                                 if (insertEntityReturnCode == HttpStatusCode.Conflict) // this is returned when entity is already stored in the cloud
                                 {
                                     nextSampleValue = DequeueNextSampleValue();
                                     Thread.Sleep(0);
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, "Entity already created, deleted from buffer"));
+                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
                                 }
                                 else
                                 {
                                     yearOfLastSend = 2000;
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, "Failed to insert Entity, one try"));
+                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
                                     //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
                                     Thread.Sleep(3000);
                                     loopCtr++;
                                 }
+                                */
                             }
                         }
                     }
@@ -737,7 +756,7 @@ namespace HeatingSurvey
                     {
                         nextSampleValue = DequeueNextSampleValue();
                         Thread.Sleep(0);
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 9, "Failed to insert Entity after 3 tries"));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 9, tableName + ": Failed to insert Entity after 3 tries"));
                             //Debug.Print("Leaving because Entity was discarded after 3rd try. Count in buffer when leaving AzureSendManager = " + Count);
                         if (DateTime.Now < new DateTime(2016, 7, 1))       // Reboot if Entity can not be inserted, probably because of wrong time
                         {
