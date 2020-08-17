@@ -278,137 +278,153 @@ namespace HeatingSurvey
             // Now we query for the last row of the table as selected by the query string "$top=1"
             // (OLS means Of the Last Send)
             string readTimeOLS = DateTime.Now.ToString();  // shall hold send time of the last entity on Azure
-            
-            ArrayList queryArrayList = new ArrayList();           
-            try { GHI.Processor.Watchdog.ResetCounter(); }
-            catch { };
-            HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList, pTableName);
 
-            if (queryEntityReturnCode == HttpStatusCode.OK)
+            bool entityRead = false;
+            int loopCounter = 0;
+            
+            while ( (entityRead == false) && (loopCounter < 3) )
             {
+                loopCounter++;
+
+                ArrayList queryArrayList = new ArrayList();
+            
+                try { GHI.Processor.Watchdog.ResetCounter(); }
+                catch { };
+                HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList, pTableName);
+
+                if (queryEntityReturnCode == HttpStatusCode.OK)
+                {
 #if DebugPrint
                         Debug.Print("Query for entities completed. HttpStatusCode: " + queryEntityReturnCode.ToString());
 #endif
-                try { GHI.Processor.Watchdog.ResetCounter(); }
-                catch { };
-                // RoSchmi: Null reference exception occured here, unknown reason
-                if (queryArrayList == null)
-                {
-                    Debug.Print("queryArralist is null");
-                }
-                else
-                {
-                    Debug.Print("queryArralist is not null");
-                }
-
-                if (queryArrayList[0] == null)
-                {
-                    Debug.Print("queryArralist[0] is null");
-                }
-                else
-                {
-                    Debug.Print("queryArralist[0] is not null");
-                }
-
-
-
-                if (queryArrayList.Count != 0)
-                {
-                    var entityHashtable = queryArrayList[0] as Hashtable;
-                    string lastBootReason = entityHashtable["bR"].ToString();
-                    if (lastBootReason == "X")     // reboot was forced by the program (not enougth free ram)
+                    try { GHI.Processor.Watchdog.ResetCounter(); }
+                    catch { };
+                   
+             
+                    if ((queryArrayList!= null) && (queryArrayList.Count != 0))
                     {
-                        _lastResetCause = "ForcedReboot";
-                        try
+                        
+
+                        var entityHashtable = queryArrayList[0] as Hashtable;
+                        string lastBootReason = entityHashtable["bR"].ToString();
+                        if (lastBootReason == "X")     // reboot was forced by the program (not enougth free ram)
                         {
-                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString()) + 1;
-                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
-                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
-                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
-
-                            _dayMin = double.Parse(entityHashtable["min"].ToString());
-                            _dayMax = double.Parse(entityHashtable["max"].ToString());
-
-                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
-                            // RoSchmi
-                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
-                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-
-                            // RoSchmi
-                            if (pTableName.Substring(0, 7) == "Current")
+                            _lastResetCause = "ForcedReboot";
+                            try
                             {
-                                _dayMinWorkBefore = _dayMinWork;
-                                _dayMinWork = _lastContent[Ch_6_Sel - 1];
-                            }
-                            
+                                _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString()) + 1;
+                                _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
+                                _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                                _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
 
+                                if (pTableName.Substring(0, 7) == "Current")
+                                {
+                                    _dayMin = double.Parse(entityHashtable["min"].ToString());
+                                    _dayMax = double.Parse(entityHashtable["max"].ToString());
+                                }
+                                else
+                                {
+                                    _dayMin_3 = double.Parse(entityHashtable["min"].ToString());
+                                    _dayMax_3 = double.Parse(entityHashtable["max"].ToString());
+                                }
+
+                                _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                                // RoSchmi
+                                //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                                _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
+                                _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+
+                                // RoSchmi
+                                if (pTableName.Substring(0, 7) == "Current")
+                                {
+                                    _dayMinWorkBefore = _dayMinWork;
+                                    _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                                }
+
+                                entityRead = true;
+
+                            }
+                            catch { }
                         }
-                        catch { }
-                    }
-                    else
-                    {
-                        try
+                        else
                         {
-                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString());
-                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
-                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
-                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
-
-                            _dayMin = double.Parse(entityHashtable["min"].ToString());
-                            _dayMax = double.Parse(entityHashtable["max"].ToString());
-
-                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
-                            // RoSchmi
-                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());                         
-                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-
-                            // RoSchmi
-                            if (pTableName.Substring(0, 7) == "Current")
+                            try
                             {
-                                _dayMinWorkBefore = _dayMinWork;
-                                _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                                _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString());
+                                _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
+                                _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                                _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+
+                                if (pTableName.Substring(0, 7) == "Current")
+                                {
+                                    _dayMin = double.Parse(entityHashtable["min"].ToString());
+                                    _dayMax = double.Parse(entityHashtable["max"].ToString());
+                                }
+                                else
+                                {
+                                    _dayMin_3 = double.Parse(entityHashtable["min"].ToString());
+                                    _dayMax_3 = double.Parse(entityHashtable["max"].ToString());
+                                }
+                          
+
+                                _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                                // RoSchmi
+                                //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                                _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());                         
+                                _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+
+                                // RoSchmi
+                                if (pTableName.Substring(0, 7) == "Current")
+                                {
+                                    _dayMinWorkBefore = _dayMinWork;
+                                    _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                                }
+
+                                entityRead = true;
+
                             }
+                            catch { }
                         }
-                        catch { }
-                    }
                     
-                    readTimeOLS = entityHashtable["SampleTime"].ToString();
+                        readTimeOLS = entityHashtable["SampleTime"].ToString();
 
-                    try
-                    {
-                        _timeOfLastSend = new DateTime(int.Parse(readTimeOLS.Substring(6, 4)), int.Parse(readTimeOLS.Substring(0, 2)),
+                        try
+                        {
+                            _timeOfLastSend = new DateTime(int.Parse(readTimeOLS.Substring(6, 4)), int.Parse(readTimeOLS.Substring(0, 2)),
                                                        int.Parse(readTimeOLS.Substring(3, 2)), int.Parse(readTimeOLS.Substring(11, 2)),
                                                        int.Parse(readTimeOLS.Substring(14, 2)), int.Parse(readTimeOLS.Substring(17, 2)));
 
-                        // calculate back to the time without dayLightSavingTime offset
-                        _timeOfLastSend = _timeOfLastSend.AddMinutes(-DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, _timeOfLastSend, true));
-                    }
-                    catch
-                    {
-                        _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
-                    }
+                            // calculate back to the time without dayLightSavingTime offset
+                            _timeOfLastSend = _timeOfLastSend.AddMinutes(-DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, _timeOfLastSend, true));
+                        }
+                        catch
+                        {
+                            _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
+                        }
 
                    
+                    }
+                    else
+                    {
+                        _timeOfLastSend = DateTime.Now;
+                    }
+
+
                 }
                 else
                 {
+                    try { GHI.Processor.Watchdog.ResetCounter(); }
+                    catch { };
                     _timeOfLastSend = DateTime.Now;
-                }
-            }
-            else
-            {
-                try { GHI.Processor.Watchdog.ResetCounter(); }
-                catch { };
-                _timeOfLastSend = DateTime.Now;
 
 
 #if DebugPrint
                         Debug.Print("Failed to query Entities. HttpStatusCode: " + queryEntityReturnCode.ToString());
 #endif
 
-            }
+                }
+
+            }    // End While() loop
 
             pSwitchMessage = "Reboot: " + _lastResetCause;
 
@@ -469,18 +485,20 @@ namespace HeatingSurvey
                 int loopCtr = 0;
                 while (loopCtr < 3)   // We try 3 times to deliver to Azure, if not accepted, we neglect
                 {
-                        nextSampleValue = PreViewNextSampleValue();
-                        nextSampleValueIsNull = (nextSampleValue == null) ? true : false;
-                        if (nextSampleValue != null)
-                        {                      
-                            tableName = nextSampleValue.TableName;
-                            tablePreFix = tableName.Substring(tableName.Length - 5);                         
-                        }
-                        nextSampleValueShallBeSent = false;
-                        if (!nextSampleValueIsNull)
-                        {
-                            nextSampleValueShallBeSent = (nextSampleValue.ForceSend || ((nextSampleValue.TimeOfSample - sampleTimeOfLastSent) > _sendInterval)) ? true : false;
-                        }
+                    Debug.Print("Number of entities in Queue is: " + Count.ToString());
+
+                    nextSampleValue = PreViewNextSampleValue();
+                    nextSampleValueIsNull = (nextSampleValue == null) ? true : false;
+                    if (nextSampleValue != null)
+                    {                      
+                        tableName = nextSampleValue.TableName;
+                        tablePreFix = tableName.Substring(tableName.Length - 5);                         
+                    }
+                    nextSampleValueShallBeSent = false;
+                    if (!nextSampleValueIsNull)
+                    {
+                        nextSampleValueShallBeSent = (nextSampleValue.ForceSend || ((nextSampleValue.TimeOfSample - sampleTimeOfLastSent) > _sendInterval)) ? true : false;
+                    }
                     if (nextSampleValueIsNull)
                     {
                         this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, tableName + _Buffer_empty));
@@ -664,14 +682,17 @@ namespace HeatingSurvey
                     //RoSchmi
                     Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
 
-                    lock (theLock)
-                    {
+
+                    //RoSchmi:  Not sure if here should be a lock
+                    //lock (theLock)
+                    //{
                         insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName, myTempEntity, out insertEtag);
                         Thread.Sleep(1);
 
                         #region Outcommented (for tests)
                         // only for testing to produce entity that is rejected by Azure
                         //insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName.Substring(0, 6), myTempEntity, out insertEtag);
+                        //Thread.Sleep(1);
 
                         //****************  to delete ****************************
                         /*
@@ -728,27 +749,10 @@ namespace HeatingSurvey
                                 this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
                                 //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
                                 Thread.Sleep(3000);
-                                loopCtr++;
-
-                                /*
-                                if (insertEntityReturnCode == HttpStatusCode.Conflict) // this is returned when entity is already stored in the cloud
-                                {
-                                    nextSampleValue = DequeueNextSampleValue();
-                                    Thread.Sleep(0);
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
-                                }
-                                else
-                                {
-                                    yearOfLastSend = 2000;
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
-                                    //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
-                                    Thread.Sleep(3000);
-                                    loopCtr++;
-                                }
-                                */
+                                loopCtr++;                              
                             }
                         }
-                    }
+                    //}         // End of lock
 
 
 

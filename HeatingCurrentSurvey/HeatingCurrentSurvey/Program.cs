@@ -162,8 +162,8 @@ namespace HeatingCurrentSurvey
        
 
         // choose whether http or https shall be used
-        //private const bool Azure_useHTTPS = true;
-           private const bool Azure_useHTTPS = false;
+           private const bool Azure_useHTTPS = true;
+           //private const bool Azure_useHTTPS = false;
        
 
         // Preset for the Name of the Azure storage table 
@@ -240,6 +240,7 @@ namespace HeatingCurrentSurvey
         #region Fields
 
         static AutoResetEvent waitForCurrentCallback = new AutoResetEvent(false);
+        static AutoResetEvent waitForSolarTempsCallback = new AutoResetEvent(false);
 
         public static SDCard SD;
         private static bool _fs_ready = false;
@@ -695,6 +696,8 @@ namespace HeatingCurrentSurvey
       
 
         #endregion
+
+
      
         #region Event SolarPumpCurrentDataSensor_SignalReceived
         static void mySolarPumpCurrentSensor_rfm69DataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
@@ -811,19 +814,13 @@ namespace HeatingCurrentSurvey
                 #endregion
 
                 #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
-                // The regex tests can be outcommented when the _tablePreFix s valid
-                if (!_tableRegex.IsMatch(tablePreFix))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
 
-                if (!_tableRegex.IsMatch(_location_Current))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
+                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current, _sensorValueHeader_Current });
 
-                if (!_tableRegex.IsMatch(_sensorValueHeader_Current))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
-
-                if (!_tableRegex.IsMatch(_socketSensorHeader_Current))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
                 #endregion
+               
+
+                
 
                 #region After a reboot: Read the last stored entity from Azure to actualize the counters
 
@@ -1048,6 +1045,7 @@ namespace HeatingCurrentSurvey
                            {
 
                                 if (AzureSendManager._iteration == 1)
+                                
                                 {
                                     if (timeFromLastSend < makeInvalidTimeSpan)   // after reboot for the first time take values which were read back from the Cloud
                                     {
@@ -1056,7 +1054,9 @@ namespace HeatingCurrentSurvey
                                         theRow.T_2 = AzureSendManager._lastContent[Ch_3_Sel - 1];
                                         //theRow.T_3 = AzureSendManager._lastContent[Ch_4_Sel - 1];
                                         //theRow.T_4 = AzureSendManager._lastContent[Ch_5_Sel - 1];
-                                        theRow.T_5 = AzureSendManager._lastContent[Ch_6_Sel - 1];
+
+                                        //theRow.T_5 = AzureSendManager._lastContent[Ch_6_Sel - 1];
+
                                         //theRow.T_6 = AzureSendManager._lastContent[Ch_7_Sel - 1];
                                         //theRow.T_7 = AzureSendManager._lastContent[Ch_8_Sel - 1];
                                     }
@@ -1114,7 +1114,12 @@ namespace HeatingCurrentSurvey
                       }
                         // RoSchmi
                         myAzureSendManager = new AzureSendManager(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, tablePreFix, _sensorValueHeader_Current, _socketSensorHeader_Current, caCerts, timeOfThisEvent, sendInterval_Current, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
+                        
+                        
+                        
                         myAzureSendManager.AzureCommandSend += myAzureSendManager_AzureCommandSend;
+
+
                         try { GHI.Processor.Watchdog.ResetCounter(); }
                         catch { };
                         _Print_Debug("\r\nRow was sent on its way to Azure");
@@ -1154,8 +1159,17 @@ namespace HeatingCurrentSurvey
                                " ", " ", _location_Current, new TimeSpan(0), e.RepeatSend, e.RSSI, AzureSendManager._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
 
                             
+                            // RoSchmi
                             waitForCurrentCallback.Reset();
-                            waitForCurrentCallback.WaitOne(50000, true);
+                            //waitForCurrentCallback.WaitOne(50000, true);     // Wait for 50 seconds ??
+                            waitForCurrentCallback.WaitOne(5000, true);        // Changed to 5 sec
+
+
+                            /*
+                            waitForSolarTempsCallback.Reset();
+                            waitForSolarTempsCallback.WaitOne(50000, true);
+                            */
+
 
                             Thread.Sleep(5000); // Wait additional 5 sec for last thread AzureSendManager Thread to finish
                             AzureSendManager.EnqueueSampleValue(theRow);
@@ -1269,17 +1283,9 @@ namespace HeatingCurrentSurvey
             }
             #endregion
 
-
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
-            // The regex tests can be outcommented when the _tablePreFix s valid
-            if (!_tableRegex.IsMatch(e.DestinationTable))
-            { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
 
-            if (!_tableRegex.IsMatch(e.SensorLocation))
-            { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
-
-            if (!_tableRegex.IsMatch(e.MeasuredQuantity))
-            { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
+            RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
 
             #endregion
 
@@ -1603,17 +1609,11 @@ namespace HeatingCurrentSurvey
             #endregion
 
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
-            // The regex tests can be outcommented when the _tablePreFix s valid
-            if (!_tableRegex.IsMatch(e.DestinationTable))           
-            { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
 
-            if (!_tableRegex.IsMatch(e.SensorLocation))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
-
-            if (!_tableRegex.IsMatch(e.MeasuredQuantity))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
+                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
 
             #endregion
+          
                 
             DateTime timeOfThisEvent = DateTime.Now;     // Works with no daylightsavingtime correction
 
@@ -1882,19 +1882,13 @@ namespace HeatingCurrentSurvey
                 }
                 #endregion
 
-
                 #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
-                // The regex tests can be outcommented when the _tablePreFix s valid
-                if (!_tableRegex.IsMatch(e.DestinationTable))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
 
-                if (!_tableRegex.IsMatch(e.SensorLocation))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
-
-                if (!_tableRegex.IsMatch(e.MeasuredQuantity))
-                { throw new NotSupportedException("Name of a table in Azure Storage must be alphanumeric [a-zA-Z0-9]"); }
+                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
 
                 #endregion
+
+
 
                 
                 DateTime timeOfThisEvent = DateTime.Now;     // Works with no daylightsavingtime correction

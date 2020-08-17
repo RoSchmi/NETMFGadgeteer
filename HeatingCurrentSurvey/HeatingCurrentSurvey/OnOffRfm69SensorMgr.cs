@@ -150,13 +150,20 @@ namespace HeatingSurvey
                 }
 
 
-                
 
-                //int selectedPacketNum = cmdChar == '3' ? lastPacketNum_3 : lastPacketNum;
-                if (actPacketNum != lastPacketNum)
+                Char cmdChar = Encoding.UTF8.GetChars(e.receivedData, 4, 1)[0];
+                int selectedLastPacketNum = (cmdChar == '3') ? lastPacketNum_3 : lastPacketNum;
+                if (actPacketNum != selectedLastPacketNum)
                 {
-                    lastPacketNum = actPacketNum;
-                    Char cmdChar = Encoding.UTF8.GetChars(e.receivedData, 4, 1)[0];
+                    if (cmdChar == '3')
+                    {
+                        lastPacketNum_3 = actPacketNum;
+                    }
+                    else
+                    {
+                        lastPacketNum = actPacketNum;
+                    }
+                    
                     Char oldChar = Encoding.UTF8.GetChars(e.receivedData, 6, 1)[0];
 
                     
