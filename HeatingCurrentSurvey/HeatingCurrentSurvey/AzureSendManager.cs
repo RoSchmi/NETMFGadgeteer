@@ -20,8 +20,10 @@ namespace HeatingSurvey
         #region fields belonging to AzureSendManager
         //****************  SendManager *************************************
         static int yearOfLastSend = 2000;
-        static string prefixOfLastTable = "";
-        static ArrayList LastTablePrefixes = new ArrayList();
+
+        //static string prefixOfLastTable = "";
+        static ArrayList LastTableNames = new ArrayList();
+
 
         public static int _forcedReboots = 0;
         public static int _badReboots = 0;
@@ -35,8 +37,6 @@ namespace HeatingSurvey
         const double InValidValue = 999.9;
         public static double _dayMin = 1000.00;   //don't change
         public static double _dayMax = -1000.00;  //don't change
-        public static double _dayMin_3 = 1000.00;   //don't change
-        public static double _dayMax_3 = -1000.00;  //don't change
         public static double _lastValue = InValidValue; // InvalidValue
 
         static int Ch_1_Sel = 1;   // The Channel of the temp/humidity sensor (Values from 1 to 8 are allowed)
@@ -60,13 +60,11 @@ namespace HeatingSurvey
         public static DateTime _timeOfLastSend;
         //private DateTime _timeOfLastSend;
         public static DateTime _timeOfLastSensorEvent;
-        public static DateTime _timeOfLastSensorEvent_3;
         public static string _lastResetCause = "";
 
-        
+
         public static int _iteration = 0;
-        public static int _iteration_3 = 0;
-        
+
         private bool _useHttps = false;
         CloudStorageAccount _CloudStorageAccount;
         string _tablePrefix = "Y";
@@ -80,7 +78,7 @@ namespace HeatingSurvey
         private IPAddress fiddlerIPAddress;
         private int fiddlerPort = 8888;                   // Standard port of fiddler
         private Object lockThread = new object();
-        
+
         private AzureStorageHelper.DebugMode _debug = AzureStorageHelper.DebugMode.StandardDebug;
         private AzureStorageHelper.DebugLevel _debug_level = AzureStorageHelper.DebugLevel.DebugAll;
         //*******************************************************************************
@@ -133,7 +131,7 @@ namespace HeatingSurvey
             get { return _preFillLevelReached; }
             set { _preFillLevelReached = value; }
         }
-        
+
         public static void Clear()
         {
             _count = 0;
@@ -155,7 +153,7 @@ namespace HeatingSurvey
                 }
             }
         }
-        
+
         public static void EnqueueSampleValue(SampleValue SampleValue)
         {
             lock (theLock)
@@ -171,6 +169,18 @@ namespace HeatingSurvey
             }
         }
 
+        public static void DiscardNextSampleValue()
+        {
+             lock (theLock)
+             {
+                 if (_count > 0)
+                {  
+                        _tail = (_tail + 1) % _capacity;
+                        _count--;
+                }              
+             }
+        }
+
 
         public static SampleValue PreViewNextSampleValue()
         {
@@ -181,7 +191,7 @@ namespace HeatingSurvey
             }
         }
 
-        public static SampleValue  DequeueNextSampleValue()
+        public static SampleValue DequeueNextSampleValue()
         {
             lock (theLock)
             {
@@ -189,7 +199,7 @@ namespace HeatingSurvey
                 return Value;
             }
         }
-       
+
         private static SampleValue DequeueSampleValue(bool PreView)
         {
             lock (theLock)
@@ -210,7 +220,7 @@ namespace HeatingSurvey
                     return null;
                 }
             }
-        } 
+        }
 
         private static void Grow()
         {
@@ -253,7 +263,7 @@ namespace HeatingSurvey
             caCerts = pCaCerts;
             _debug = pDebugMode;
             _debug_level = pDebugLevel;
-          
+
             dstOffset = pDstOffset;
             dstStart = pDstStart;
             dstEnd = pDstEnd;
@@ -270,7 +280,7 @@ namespace HeatingSurvey
 
 
         #region Method ActualizeFromLastAzureRow
-        public Counters ActualizeFromLastAzureRow(ref string pSwitchMessage, string pTableName)
+        public Counters ActualizeFromLastAzureRow(ref string pSwitchMessage)
         {
 #if DebugPrint
                     Debug.Print("\r\nGoing to query for Entities");
@@ -279,152 +289,100 @@ namespace HeatingSurvey
             // (OLS means Of the Last Send)
             string readTimeOLS = DateTime.Now.ToString();  // shall hold send time of the last entity on Azure
 
-            bool entityRead = false;
-            int loopCounter = 0;
-            
-            while ( (entityRead == false) && (loopCounter < 3) )
+            ArrayList queryArrayList = new ArrayList();
+            try { GHI.Processor.Watchdog.ResetCounter(); }
+            catch { };
+            HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList);
+
+            if (queryEntityReturnCode == HttpStatusCode.OK)
             {
-                loopCounter++;
-
-                ArrayList queryArrayList = new ArrayList();
-            
-                try { GHI.Processor.Watchdog.ResetCounter(); }
-                catch { };
-                HttpStatusCode queryEntityReturnCode = queryTableEntities("$top=1", out queryArrayList, pTableName);
-
-                if (queryEntityReturnCode == HttpStatusCode.OK)
-                {
 #if DebugPrint
                         Debug.Print("Query for entities completed. HttpStatusCode: " + queryEntityReturnCode.ToString());
 #endif
-                    try { GHI.Processor.Watchdog.ResetCounter(); }
-                    catch { };
-                   
-             
-                    if ((queryArrayList!= null) && (queryArrayList.Count != 0))
+                try { GHI.Processor.Watchdog.ResetCounter(); }
+                catch { };
+                if (queryArrayList.Count != 0)
+                {
+                    var entityHashtable = queryArrayList[0] as Hashtable;
+                    string lastBootReason = entityHashtable["bR"].ToString();
+                    if (lastBootReason == "X")     // reboot was forced by the program (not enougth free ram)
                     {
-                        
-
-                        var entityHashtable = queryArrayList[0] as Hashtable;
-                        string lastBootReason = entityHashtable["bR"].ToString();
-                        if (lastBootReason == "X")     // reboot was forced by the program (not enougth free ram)
-                        {
-                            _lastResetCause = "ForcedReboot";
-                            try
-                            {
-                                _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString()) + 1;
-                                _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
-                                _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
-                                _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
-
-                                if (pTableName.Substring(0, 7) == "Current")
-                                {
-                                    _dayMin = double.Parse(entityHashtable["min"].ToString());
-                                    _dayMax = double.Parse(entityHashtable["max"].ToString());
-                                }
-                                else
-                                {
-                                    _dayMin_3 = double.Parse(entityHashtable["min"].ToString());
-                                    _dayMax_3 = double.Parse(entityHashtable["max"].ToString());
-                                }
-
-                                _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
-                                // RoSchmi
-                                //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                                _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
-                                _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-
-                                // RoSchmi
-                                if (pTableName.Substring(0, 7) == "Current")
-                                {
-                                    _dayMinWorkBefore = _dayMinWork;
-                                    _dayMinWork = _lastContent[Ch_6_Sel - 1];
-                                }
-
-                                entityRead = true;
-
-                            }
-                            catch { }
-                        }
-                        else
-                        {
-                            try
-                            {
-                                _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString());
-                                _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
-                                _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
-                                _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
-
-                                if (pTableName.Substring(0, 7) == "Current")
-                                {
-                                    _dayMin = double.Parse(entityHashtable["min"].ToString());
-                                    _dayMax = double.Parse(entityHashtable["max"].ToString());
-                                }
-                                else
-                                {
-                                    _dayMin_3 = double.Parse(entityHashtable["min"].ToString());
-                                    _dayMax_3 = double.Parse(entityHashtable["max"].ToString());
-                                }
-                          
-
-                                _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
-                                // RoSchmi
-                                //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                                _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());                         
-                                _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-
-                                // RoSchmi
-                                if (pTableName.Substring(0, 7) == "Current")
-                                {
-                                    _dayMinWorkBefore = _dayMinWork;
-                                    _dayMinWork = _lastContent[Ch_6_Sel - 1];
-                                }
-
-                                entityRead = true;
-
-                            }
-                            catch { }
-                        }
-                    
-                        readTimeOLS = entityHashtable["SampleTime"].ToString();
-
+                        _lastResetCause = "ForcedReboot";
                         try
                         {
-                            _timeOfLastSend = new DateTime(int.Parse(readTimeOLS.Substring(6, 4)), int.Parse(readTimeOLS.Substring(0, 2)),
-                                                       int.Parse(readTimeOLS.Substring(3, 2)), int.Parse(readTimeOLS.Substring(11, 2)),
-                                                       int.Parse(readTimeOLS.Substring(14, 2)), int.Parse(readTimeOLS.Substring(17, 2)));
+                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString()) + 1;
+                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString());
+                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+                            _dayMin = double.Parse(entityHashtable["min"].ToString());
+                            _dayMax = double.Parse(entityHashtable["max"].ToString());
+                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            // RoSchmi
+                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _dayMinWorkBefore = _dayMinWork;
+                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
 
-                            // calculate back to the time without dayLightSavingTime offset
-                            _timeOfLastSend = _timeOfLastSend.AddMinutes(-DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, _timeOfLastSend, true));
                         }
-                        catch
-                        {
-                            _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
-                        }
-
-                   
+                        catch { }
                     }
                     else
                     {
-                        _timeOfLastSend = DateTime.Now;
+                        try
+                        {
+                            _forcedReboots = int.Parse(entityHashtable["forcedReboots"].ToString());
+                            _badReboots = int.Parse(entityHashtable["badReboots"].ToString()) + 1;
+                            _azureSends = int.Parse(entityHashtable["Sends"].ToString()) + 1;
+                            _azureSendErrors = int.Parse(entityHashtable["sendErrors"].ToString());
+                            _dayMin = double.Parse(entityHashtable["min"].ToString());
+                            _dayMax = double.Parse(entityHashtable["max"].ToString());
+                            _lastContent[Ch_3_Sel - 1] = double.Parse(entityHashtable["T_3"].ToString());
+                            // RoSchmi
+                            //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
+                            _dayMinWorkBefore = _dayMinWork;
+                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                        }
+                        catch { }
+                    }
+
+                    readTimeOLS = entityHashtable["SampleTime"].ToString();
+
+                    try
+                    {
+                        _timeOfLastSend = new DateTime(int.Parse(readTimeOLS.Substring(6, 4)), int.Parse(readTimeOLS.Substring(0, 2)),
+                                                       int.Parse(readTimeOLS.Substring(3, 2)), int.Parse(readTimeOLS.Substring(11, 2)),
+                                                       int.Parse(readTimeOLS.Substring(14, 2)), int.Parse(readTimeOLS.Substring(17, 2)));
+
+                        // calculate back to the time without dayLightSavingTime offset
+                        _timeOfLastSend = _timeOfLastSend.AddMinutes(-DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, _timeOfLastSend, true));
+                    }
+                    catch
+                    {
+                        _timeOfLastSend = DateTime.Now.AddHours(-1.0);  // if something goes wrong, take DateTime.Now minus 1 hour;
                     }
 
 
                 }
                 else
                 {
-                    try { GHI.Processor.Watchdog.ResetCounter(); }
-                    catch { };
                     _timeOfLastSend = DateTime.Now;
+                }
+            }
+            else
+            {
+                try { GHI.Processor.Watchdog.ResetCounter(); }
+                catch { };
+                _timeOfLastSend = DateTime.Now;
 
 
 #if DebugPrint
                         Debug.Print("Failed to query Entities. HttpStatusCode: " + queryEntityReturnCode.ToString());
 #endif
 
-                }
-
-            }    // End While() loop
+            }
 
             pSwitchMessage = "Reboot: " + _lastResetCause;
 
@@ -433,7 +391,7 @@ namespace HeatingSurvey
             returnValue.AzureSendErrors = _azureSendErrors;
             returnValue.ForcedReboots = _forcedReboots;
             returnValue.BadReboots = _badReboots;
-           
+
 
             return returnValue;
         }
@@ -441,7 +399,7 @@ namespace HeatingSurvey
 
 
         #region public Method queryTableEntities
-        public HttpStatusCode queryTableEntities(string query, out ArrayList queryResult, string pTableName)
+        public HttpStatusCode queryTableEntities(string query, out ArrayList queryResult)
         {
             // Now we query for the last row of the table as selected by the query string "$top=1"
             ArrayList queryArrayList = new ArrayList();
@@ -449,11 +407,8 @@ namespace HeatingSurvey
             //This operation does not work with https, so the CloudStorageAccount is set to use http
             _CloudStorageAccount = new CloudStorageAccount(_CloudStorageAccount.AccountName, _CloudStorageAccount.AccountKey, useHttps: false);
 
-            //string tableName = _tablePrefix + DateTime.Now.Year;
-
-            //HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, tableName, "$top=1", out queryArrayList);
-            HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, pTableName, "$top=1", out queryArrayList);
-
+            string tableName = _tablePrefix + DateTime.Now.Year;
+            HttpStatusCode queryEntityReturnCode = queryTableEntities(_CloudStorageAccount, tableName, "$top=1", out queryArrayList);
 
             _CloudStorageAccount = new CloudStorageAccount(_CloudStorageAccount.AccountName, _CloudStorageAccount.AccountKey, useHttps: _useHttps);  // Reset Cloudstorageaccount to the original settings (http or https)
             /*
@@ -468,319 +423,282 @@ namespace HeatingSurvey
         #endregion
 
         #region runSendThread
-        public void runSendThread()             // AzureSendManager
+        public void runSendThread()
         {
-                SampleValue nextSampleValue;
-                HttpStatusCode createTableReturnCode;
-                HttpStatusCode insertEntityReturnCode = HttpStatusCode.Ambiguous;
-                string actYear = DateTime.Now.Year.ToString();
+            SampleValue nextSampleValue;
+            HttpStatusCode createTableReturnCode;
+            HttpStatusCode insertEntityReturnCode = HttpStatusCode.Ambiguous;
+            int actYear = DateTime.Now.Year;
+            string tableName = null;
+            string tablePreFix = null;
 
+            //string tableName = _tablePrefix + actYear.ToString();
+            //string tablePreFix = _tablePrefix;
 
-                string tableName = _tablePrefix + actYear;
-                string tablePreFix = _tablePrefix;
-                
-                bool nextSampleValueIsNull = false;
-                bool nextSampleValueShallBeSent = false;
+            bool nextSampleValueIsNull = false;
+            bool nextSampleValueShallBeSent = false;
 
-                int loopCtr = 0;
-                while (loopCtr < 3)   // We try 3 times to deliver to Azure, if not accepted, we neglect
+            int loopCtr = 0;
+            while (loopCtr < 3)   // We try 3 times to deliver to Azure, if not accepted, we neglect
+            {
+                Debug.Print("Number of entities in Queue is: " + Count.ToString());
+
+                nextSampleValue = PreViewNextSampleValue();
+                nextSampleValueIsNull = (nextSampleValue == null) ? true : false;
+                nextSampleValueShallBeSent = false;
+                if (!nextSampleValueIsNull)
                 {
-                    Debug.Print("Number of entities in Queue is: " + Count.ToString());
+                    nextSampleValueShallBeSent = (nextSampleValue.ForceSend || ((nextSampleValue.TimeOfSample - sampleTimeOfLastSent) > _sendInterval)) ? true : false;
+                    tableName = nextSampleValue.TableName;
+                    tablePreFix = tableName.Substring(0, tableName.Length - 4);
+                }
+                if (nextSampleValueIsNull)
+                {
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, "Buffer empty"));
+                    //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
+                    break;
+                }
+                if (!nextSampleValueShallBeSent)
+                {
+                    //nextSampleValue = DequeueNextSampleValue();    // Discard this to early object
+                    DiscardNextSampleValue();
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, "Early object discarded"));
+                }
 
-                    nextSampleValue = PreViewNextSampleValue();
-                    nextSampleValueIsNull = (nextSampleValue == null) ? true : false;
-                    if (nextSampleValue != null)
-                    {                      
-                        tableName = nextSampleValue.TableName;
-                        tablePreFix = tableName.Substring(tableName.Length - 5);                         
-                    }
-                    nextSampleValueShallBeSent = false;
-                    if (!nextSampleValueIsNull)
+                
+                #region Create a Azure Table, Name = tablePrefix plus the actual year (only when needed)
+               
+                if ((DateTime.Now.Year != yearOfLastSend) || (!LastTableNames.Contains(tableName)))
+                {                 
+                    createTableReturnCode = createTable(_CloudStorageAccount, tableName);
+
+                    if ((createTableReturnCode == HttpStatusCode.Created) || (createTableReturnCode == HttpStatusCode.Conflict))
                     {
-                        nextSampleValueShallBeSent = (nextSampleValue.ForceSend || ((nextSampleValue.TimeOfSample - sampleTimeOfLastSent) > _sendInterval)) ? true : false;
-                    }
-                    if (nextSampleValueIsNull)
-                    {
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 1, tableName + _Buffer_empty));
-                        //Debug.Print("Leaving because buffer is empty. Count in buffer when leaving AzureSendManager = " + Count);
-                        break;
-                    }
-                    if (!nextSampleValueShallBeSent)
-                    {
-                        nextSampleValue = DequeueNextSampleValue();    // Discard this to early object
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 2, tableName + _Early_object_discarded));
-                    }
-
-                    #region Create a Azure Table, Name = tablePrefix plus the actual year (only when needed)
-                    
-                    if ((DateTime.Now.Year != yearOfLastSend) || (!LastTablePrefixes.Contains(tablePreFix)))
-                    {
-                        //actYear = DateTime.Now.Year;
-
-                        //tableName = nextSampleValue.TablePreFix + actYear.ToString();
-                        tableName = nextSampleValue.TableName;
-
-                        createTableReturnCode = createTable(_CloudStorageAccount, tableName);
-
-                        //createTableReturnCode = HttpStatusCode.NotAcceptable;
-                        //createTableReturnCode = HttpStatusCode.Ambiguous;
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
-                            //Debug.Print("Table was created: " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 3, tableName + _Table_created));
-                            //yearOfLastSend = actYear;
-                            yearOfLastSend = DateTime.Now.Year;
-
-                            //prefixOfLastTable = _tablePrefix;
-                            prefixOfLastTable = nextSampleValue.TableName.Substring(tableName.Length - 5);
-                            if (!LastTablePrefixes.Contains(prefixOfLastTable))
-                            {
-                                LastTablePrefixes.Add(prefixOfLastTable);
-                            }
-                            
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, createTableReturnCode, 3, tableName + _Table_created));
                         }
                         else
                         {
-                            if (createTableReturnCode == HttpStatusCode.Conflict)
-                            {
-                                //Debug.Print("Table " + tableName + " already exists");
-
-
-                                //prefixOfLastTable = _tablePrefix;
-                                prefixOfLastTable = nextSampleValue.TableName.Substring(tableName.Length - 5);
-                                if (!LastTablePrefixes.Contains(prefixOfLastTable))
-                                {
-                                    LastTablePrefixes.Add(prefixOfLastTable);
-                                }
-
-                                yearOfLastSend = DateTime.Now.Year;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
-                            }
-                            else
-                            {
-                                if (createTableReturnCode == HttpStatusCode.NoContent)
-                                {
-                                    //Debug.Print("Create Table operation. HttpStatusCode: " + createTableReturnCode.ToString());
-                                    yearOfLastSend = DateTime.Now.Year; 
-                                }
-                                else
-                                {
-                                    //Debug.Print("Failed to create Table " + tableName + ". HttpStatusCode: " + createTableReturnCode.ToString());
-                                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
-                                    Thread.Sleep(10000);
-                                    Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
-                                    while (true)
-                                    {
-                                        Thread.Sleep(100);
-                                    }
-
-
-                                    //break;
-                                }
-                            }
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
                         }
-                        Thread.Sleep(3000);
-                    }
-                    #endregion
-
-                        #region Create an ArrayList  to hold the properties of the entity
-                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, tableName + _Going_to_insert_Entity));
-                    //Debug.Print("\r\nGoing to insert an entity");
-                    // Now we create an Arraylist to hold the properties of a table Row,
-                    // write these items to an entity
-                    // and send this entity to the Cloud
-
-                    string TimeOffsetUTCString = nextSampleValue.TimeOffSetUTC < 0 ? nextSampleValue.TimeOffSetUTC.ToString("D3") : "+" + nextSampleValue.TimeOffSetUTC.ToString("D3");
-
-                    ArrayList propertiesAL = new System.Collections.ArrayList();
-                    TableEntityProperty property;
-                    lock (theLock)
-                    {
-                        //Add properties to ArrayList (Name, Value, Type)
-                        property = new TableEntityProperty(_sensorValueHeader, nextSampleValue.TheSampleValue.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("min", nextSampleValue.DayMin.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("max", nextSampleValue.DayMax.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("T_1", nextSampleValue.T_0.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        
-                       
-                        property = new TableEntityProperty("T_2", nextSampleValue.T_1.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                       
-
-                        property = new TableEntityProperty("T_3", nextSampleValue.T_2.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        
-
-                        property = new TableEntityProperty("T_4", nextSampleValue.T_3.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("T_5", nextSampleValue.T_4.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("T_6", nextSampleValue.T_5.ToString("f2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        
-                        property = new TableEntityProperty(_socketSensorHeader, nextSampleValue.SecondReport, "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Status", nextSampleValue.Status, "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("Location", nextSampleValue.Location, "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("SampleTime", nextSampleValue.TimeOfSample.ToString() + " " + TimeOffsetUTCString, "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("TimeFromLast", nextSampleValue.TimeFromLast.Days.ToString("D3") + "-" + nextSampleValue.TimeFromLast.Hours.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Minutes.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Seconds.ToString("D2"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D4"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("RSSI", nextSampleValue.RSSI.ToString("D3"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-
-                        property = new TableEntityProperty("Iterations", nextSampleValue.Iterations.ToString("D6"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Sends", _azureSends.ToString("D6"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("RemainRam", nextSampleValue.RemainingRam.ToString("D7"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("forcedReboots", nextSampleValue.ForcedReboots.ToString("D6"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("badReboots", nextSampleValue.BadReboots.ToString("D6"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("sendErrors", nextSampleValue.SendErrors.ToString("D4"), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("bR", nextSampleValue.BootReason.ToString(), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("fS", nextSampleValue.ForceSend ? "X" : ".", "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                        property = new TableEntityProperty("Message", nextSampleValue.Message.ToString(), "Edm.String");
-                        propertiesAL.Add(makePropertyArray.result(property));
-                    }
-                    #endregion
-
-                    //Thread.Sleep(1100);
-                    //DateTime actDate = DateTime.Now;
-                    //DateTime.Now.AddMinutes(DayLihtSavingTime.DayLightTimeOffset(_dstStart, _dstEnd, _dstOffset, DateTime.Now, true));
-
-                    DateTime actDate = nextSampleValue.TimeOfSample;
                       
-
-                    //calculate reverse Date, so the last entity can be retrieved with the Azure $top1 query
-                    string reverseDate = (10000 - actDate.Year).ToString("D4") + (12 - actDate.Month).ToString("D2") + (31 - actDate.Day).ToString("D2")
-                           + (23 - actDate.Hour).ToString("D2") + (59 - actDate.Minute).ToString("D2") + (59 - actDate.Second).ToString("D2");
-
-                    TempEntity myTempEntity = new TempEntity(nextSampleValue.PartitionKey, reverseDate, propertiesAL);
-                    string insertEtag = null;
-
-                    //RoSchmi
-                    Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
-
-
-                    //RoSchmi:  Not sure if here should be a lock
-                    //lock (theLock)
-                    //{
-                        insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName, myTempEntity, out insertEtag);
-                        Thread.Sleep(1);
-
-                        #region Outcommented (for tests)
-                        // only for testing to produce entity that is rejected by Azure
-                        //insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName.Substring(0, 6), myTempEntity, out insertEtag);
-                        //Thread.Sleep(1);
-
-                        //****************  to delete ****************************
-                        /*
-                             if (DateTime.Now < new DateTime(2016, 8, 2, 0, 31, 1))
-                             {
-                                 Debug.Print("Löschen geblockt");
-                                 insertEntityReturnCode = HttpStatusCode.Ambiguous;
-                             }
-                             else
-                             {
-                                 Debug.Print("Löschen erlaubt");
-                             }
-                        */
-                        //*********************************************************
-                        #endregion
-
-
-
-                        if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent) || (insertEntityReturnCode == HttpStatusCode.Conflict))
+                        yearOfLastSend = DateTime.Now.Year;
+                                            
+                        if (!LastTableNames.Contains(tableName))
                         {
-                            //Debug.Print("Entity was inserted. Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
-
-                            nextSampleValue = DequeueNextSampleValue();
-                            Thread.Sleep(0);
-                            if (nextSampleValue != null)
-                            {
-                                if (!nextSampleValue.ForceSend)
-                                { sampleTimeOfLastSent = nextSampleValue.TimeOfSample; }
-                            }
-
-                            if (insertEntityReturnCode == HttpStatusCode.Conflict)
-                            {
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
-                            }
-                            else
-                            {
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, tableName + _Entity_was_inserted + reverseDate));
-                            }
-
-                            // don't break, the loop is left when we try to get the next row until it is null
+                            LastTableNames.Add(tableName);
+                        }
+                    }
+                    else
+                    {
+                        if (createTableReturnCode == HttpStatusCode.NoContent)
+                        {
+                                //Debug.Print("Create Table operation. HttpStatusCode: " + createTableReturnCode.ToString());
+                            yearOfLastSend = DateTime.Now.Year;
                         }
                         else
-                        {
-                            if (insertEntityReturnCode == HttpStatusCode.Ambiguous) // this is returned when no contact to internet
-                            {
-                                yearOfLastSend = 2000;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, "No Internet access"));
-                                //Debug.Print("Leaving because of no internet access. Count in buffer when leaving AzureSendManager = " + Count);
-                                break;
-                            }
-                            else
-                            {
-                                yearOfLastSend = 2000;
-                                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
-                                //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
-                                Thread.Sleep(3000);
-                                loopCtr++;                              
-                            }
-                        }
-                    //}         // End of lock
-
-
-
-                    if (loopCtr >= 3)           // if Azure does not accept the entity, we give up after the third try and discard this entity
-                    {
-                        nextSampleValue = DequeueNextSampleValue();
-                        Thread.Sleep(0);
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 9, tableName + ": Failed to insert Entity after 3 tries"));
-                            //Debug.Print("Leaving because Entity was discarded after 3rd try. Count in buffer when leaving AzureSendManager = " + Count);
-                        if (DateTime.Now < new DateTime(2016, 7, 1))       // Reboot if Entity can not be inserted, probably because of wrong time
-                        {
-                            Thread.Sleep(20000);
+                        {     
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
+                            Thread.Sleep(10000);
                             Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
                             while (true)
                             {
                                 Thread.Sleep(100);
-                            }
+                            }                                                   
                         }
-                        break;
-                        }
-                    Thread.Sleep(1);
+                    }
+                    Thread.Sleep(3000);
                 }
-                //Debug.Print("\r\nJumped out of while loop\r\n");
-
-                //Debug.Print("Count in buffer when entering AzureSendManager = " + Count);
-
+                #endregion
 
                 
+                #region Create an ArrayList  to hold the properties of the entity
+                this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 6, tableName + _Going_to_insert_Entity)); 
+                
+                // Now we create an Arraylist to hold the properties of a table Row,
+                // write these items to an entity
+                // and send this entity to the Cloud
+
+                string TimeOffsetUTCString = nextSampleValue.TimeOffSetUTC < 0 ? nextSampleValue.TimeOffSetUTC.ToString("D3") : "+" + nextSampleValue.TimeOffSetUTC.ToString("D3");
+
+                ArrayList propertiesAL = new System.Collections.ArrayList();
+                TableEntityProperty property;
+                lock (theLock)
+                {
+                    //Add properties to ArrayList (Name, Value, Type)
+                    property = new TableEntityProperty(_sensorValueHeader, nextSampleValue.TheSampleValue.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("min", nextSampleValue.DayMin.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("max", nextSampleValue.DayMax.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("T_1", nextSampleValue.T_0.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+
+                    property = new TableEntityProperty("T_2", nextSampleValue.T_1.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+
+                    property = new TableEntityProperty("T_3", nextSampleValue.T_2.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+
+                    property = new TableEntityProperty("T_4", nextSampleValue.T_3.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("T_5", nextSampleValue.T_4.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("T_6", nextSampleValue.T_5.ToString("f2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty(_socketSensorHeader, nextSampleValue.SecondReport, "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("Status", nextSampleValue.Status, "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("Location", nextSampleValue.Location, "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("SampleTime", nextSampleValue.TimeOfSample.ToString() + " " + TimeOffsetUTCString, "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("TimeFromLast", nextSampleValue.TimeFromLast.Days.ToString("D3") + "-" + nextSampleValue.TimeFromLast.Hours.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Minutes.ToString("D2") + ":" + nextSampleValue.TimeFromLast.Seconds.ToString("D2"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("Info", nextSampleValue.SendInfo.ToString("D4"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("RSSI", nextSampleValue.RSSI.ToString("D3"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+
+                    property = new TableEntityProperty("Iterations", nextSampleValue.Iterations.ToString("D6"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("Sends", _azureSends.ToString("D6"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("RemainRam", nextSampleValue.RemainingRam.ToString("D7"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("forcedReboots", nextSampleValue.ForcedReboots.ToString("D6"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("badReboots", nextSampleValue.BadReboots.ToString("D6"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("sendErrors", nextSampleValue.SendErrors.ToString("D4"), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("bR", nextSampleValue.BootReason.ToString(), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("fS", nextSampleValue.ForceSend ? "X" : ".", "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                    property = new TableEntityProperty("Message", nextSampleValue.Message.ToString(), "Edm.String");
+                    propertiesAL.Add(makePropertyArray.result(property));
+                }
+                #endregion
+
+                
+                DateTime actDate = nextSampleValue.TimeOfSample;
+
+
+                //calculate reverse Date, so the last entity can be retrieved with the Azure $top1 query
+                string reverseDate = (10000 - actDate.Year).ToString("D4") + (12 - actDate.Month).ToString("D2") + (31 - actDate.Day).ToString("D2")
+                       + (23 - actDate.Hour).ToString("D2") + (59 - actDate.Minute).ToString("D2") + (59 - actDate.Second).ToString("D2");
+
+                TempEntity myTempEntity = new TempEntity(nextSampleValue.PartitionKey, reverseDate, propertiesAL);
+                string insertEtag = null;
+
+                //RoSchmi
+                Debug.Print("\r\nTry to insert in Table: " + tableName + " RowKey " + reverseDate + "\r\n");
+
+                insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName, myTempEntity, out insertEtag);
+
+                #region Outcommented (for tests)
+                // only for testing to produce entity that is rejected by Azure
+                // insertEntityReturnCode = insertTableEntity(_CloudStorageAccount, tableName.Substring(0, 6), myTempEntity, out insertEtag);
+
+                //****************  to delete ****************************
+                /*
+                     if (DateTime.Now < new DateTime(2016, 8, 2, 0, 31, 1))
+                     {
+                         Debug.Print("Löschen geblockt");
+                         insertEntityReturnCode = HttpStatusCode.Ambiguous;
+                     }
+                     else
+                     {
+                         Debug.Print("Löschen erlaubt");
+                     }
+                */
+                //*********************************************************
+                #endregion
+
+
+                if ((insertEntityReturnCode == HttpStatusCode.Created) || (insertEntityReturnCode == HttpStatusCode.NoContent) || (insertEntityReturnCode == HttpStatusCode.Conflict))
+                {
+                    //Debug.Print("Entity was inserted. Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
+
+                    nextSampleValue = DequeueNextSampleValue();
+                    Thread.Sleep(0);
+                    if (nextSampleValue != null)
+                    {
+                        if (!nextSampleValue.ForceSend)
+                        { sampleTimeOfLastSent = nextSampleValue.TimeOfSample; }
+                    }
+
+                    if (insertEntityReturnCode == HttpStatusCode.Conflict)
+                    {
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
+                    }
+                    else
+                    {
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(true, false, insertEntityReturnCode, 0, tableName + _Entity_was_inserted + reverseDate));
+                    }
+
+                    // don't break, the loop is left when we try to get the next row until it is null
+                }
+                else
+                {
+                    if (insertEntityReturnCode == HttpStatusCode.Ambiguous) // this is returned when no contact to internet
+                    {
+                        yearOfLastSend = 2000;
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, "No Internet access"));
+                        //Debug.Print("Leaving because of no internet access. Count in buffer when leaving AzureSendManager = " + Count);
+                        break;
+                    }
+                    else
+                    {
+                        yearOfLastSend = 2000;
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 8, tableName + ": Failed to insert Entity, one try" + reverseDate));
+                        //Debug.Print("Failed to insert Entity, Try: " + loopCtr.ToString() + " HttpStatusCode: " + insertEntityReturnCode.ToString());
+                        Thread.Sleep(3000);
+                        loopCtr++;
+                    }
+                }
+
+
+
+
+                if (loopCtr >= 3)           // if Azure does not accept the entity, we give up after the third try and discard this entity
+                {
+                    nextSampleValue = DequeueNextSampleValue();
+                    this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 9, tableName +  "Failed to insert Entity after 3 tries"));
+                    //Debug.Print("Leaving because Entity was discarded after 3rd try. Count in buffer when leaving AzureSendManager = " + Count);
+                    if (DateTime.Now < new DateTime(2016, 7, 1))       // Reboot if Entity can not be inserted, probably because of wrong time
+                    {
+                        Thread.Sleep(20000);
+                        Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
+                        while (true)
+                        {
+                            Thread.Sleep(100);
+                        }
+                    }
+                    break;
+                }
+                Thread.Sleep(1);
+            }
+            Debug.Print("Jumped out of while loop");
+
+            //Debug.Print("Count in buffer when entering AzureSendManager = " + Count);
+
+
+
         }
         #endregion
 
@@ -789,7 +707,7 @@ namespace HeatingSurvey
         {
             table = new TableClient(pCloudStorageAccount, caCerts, _debug, _debug_level);
 
-         
+
 
             // To use Fiddler as WebProxy include the following line. Use the local IP-Address of the PC where Fiddler is running
             // see: -http://blog.devmobile.co.nz/2013/01/09/netmf-http-debugging-with-fiddler
@@ -808,7 +726,7 @@ namespace HeatingSurvey
             // To use Fiddler as WebProxy include the following line. Use the local IP-Address of the PC where Fiddler is running
             // see: -http://blog.devmobile.co.nz/2013/01/09/netmf-http-debugging-with-fiddler
             if (attachFiddler)
-            { table.attachFiddler(true, fiddlerIPAddress, fiddlerPort);}
+            { table.attachFiddler(true, fiddlerIPAddress, fiddlerPort); }
 
             var resultCode = table.InsertTableEntity(pTable, pTableEntity, TableClient.ContType.applicationIatomIxml, TableClient.AcceptType.applicationIjson, TableClient.ResponseType.dont_returnContent, useSharedKeyLite: false);
             pInsertETag = table.OperationResponseETag;
@@ -867,7 +785,7 @@ namespace HeatingSurvey
             /// The HttpStatusCode of the response
             /// </summary>
             /// 
-            public HttpStatusCode returnCode 
+            public HttpStatusCode returnCode
             { get; private set; }
 
 
@@ -923,7 +841,7 @@ namespace HeatingSurvey
         private void OnAzureCommandSend(AzureSendManager sender, AzureSendEventArgs e)
         {
             if (this.onAzureCommandSend == null)
-            { 
+            {
                 this.onAzureCommandSend = this.OnAzureCommandSend;
             }
             //Changed by RoSchmi

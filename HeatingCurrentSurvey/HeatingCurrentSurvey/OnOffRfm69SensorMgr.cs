@@ -179,23 +179,19 @@ namespace HeatingSurvey
                     {
                         actState = cmdChar == '1' ? InputSensorState.High : InputSensorState.Low;
                         oldState = oldChar == '1' ? InputSensorState.High : InputSensorState.Low;
-                        /*  Used for tests
-                        if (current == 3122)
-                        {
-                            current = 3010;
-                        }
-                        */
+                       
                         OnRfm69OnOffSensorSend(this, new OnOffSensorEventArgs(actState, oldState, repeatSend, DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), SensorLabel, SensorLocation, MeasuredQuantity, DestinationTable, Channel, false, current, power, work));
                     }
                     if (cmdChar == '2')                          // Comes from current sensor    
                     {
                         
-                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
+                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.          DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, DestinationTableContinuous, Channel, false));
                     }
-                    if (cmdChar == '3')                          // Comes from solar temperature sensor (Collector, Storage, Water)  
+                    if (cmdChar == '3')                          // Comes from solar temperature sensor (Collector, Storage, Water)
                     {
+                        OnRfm69SolarTempsDataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
                         // Destination Table is changed to "EscapeTableLocation_03" (Magic String)
-                        OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
+                       // OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
                     }
                 }
             }
@@ -340,6 +336,34 @@ namespace HeatingSurvey
 
 
         #region Delegates
+
+
+        /// <summary>
+        /// The delegate that is used to handle the data message.
+        /// </summary>
+        /// <param name="sender">The <see cref="Rfm69"/> object that raised the event.</param>
+        /// <param name="e">The event arguments.</param>     
+        public delegate void rfm69SolarTempsDataSensorEventhandler(OnOffRfm69SensorMgr sender, DataSensorEventArgs e);
+
+        /// <summary>
+        /// Raised when a message with Current data is received
+        /// </summary>
+        public event rfm69SolarTempsDataSensorEventhandler rfm69SolarTempsDataSensorSend;
+
+        private rfm69SolarTempsDataSensorEventhandler onRfm69SolarTempsDataSensorSend;
+
+        private void OnRfm69SolarTempsDataSensorSend(OnOffRfm69SensorMgr sender, DataSensorEventArgs e)
+        {
+            if (this.onRfm69SolarTempsDataSensorSend == null)
+            {
+                this.onRfm69SolarTempsDataSensorSend = this.OnRfm69SolarTempsDataSensorSend;
+            }
+            this.rfm69SolarTempsDataSensorSend(sender, e);
+        }
+
+
+
+
         /// <summary>
         /// The delegate that is used to handle the data message.
         /// </summary>
@@ -348,7 +372,7 @@ namespace HeatingSurvey
         public delegate void rfm69DataSensorEventhandler(OnOffRfm69SensorMgr sender, DataSensorEventArgs e);
 
         /// <summary>
-        /// Raised when a message from the PRU is received
+        /// Raised when a message with Current data is received
         /// </summary>
         public event rfm69DataSensorEventhandler rfm69DataSensorSend;
 
@@ -362,6 +386,8 @@ namespace HeatingSurvey
             }
             this.rfm69DataSensorSend(sender, e);
         }
+
+
 
 
         /// <summary>
