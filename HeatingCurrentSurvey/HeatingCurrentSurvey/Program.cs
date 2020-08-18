@@ -359,6 +359,11 @@ namespace HeatingCurrentSurvey
             if (GHI.Processor.Watchdog.LastResetCause == GHI.Processor.Watchdog.ResetCause.Watchdog)
             {
                 _lastResetCause = " Watchdog";
+                Debug.Print("Last Reset Cause: Watchdog");
+            }
+            else
+            {
+                Debug.Print("Last Reset Cause: Power/Reset");
             }
             if (GHI.Processor.Watchdog.Enabled)
             {
@@ -721,9 +726,12 @@ namespace HeatingCurrentSurvey
 
             double decimalValue = (double)e.Val_1 / 100;            // T_1
             decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 140) ? 140.0 : decimalValue;
-           
-            double cutPower = (double)((double)(e.Val_2 - 700) / 10);   // T_2
-            cutPower = ((cutPower > 140) || (cutPower < -40)) ? InValidValue : cutPower;
+
+            double t2_decimal_value = (double)((double)(e.Val_2 - 700) / 10);   // T_2
+            t2_decimal_value = ((t2_decimal_value > 140) || (t2_decimal_value < -40)) ? InValidValue : t2_decimal_value;
+
+            //double cutPower = (double)((double)(e.Val_2 - 700) / 10);   // T_2
+            //cutPower = ((cutPower > 140) || (cutPower < -40)) ? InValidValue : cutPower;
 
             double logCurrent = 0;
             double t3_decimal_value = (double)((double)(e.Val_3 - 700) / 10);   // T_3
@@ -742,7 +750,7 @@ namespace HeatingCurrentSurvey
 #endif
 
 #if DebugPrint
-                Debug.Print("Rfm69 event, Data: " + decimalValue.ToString("f2") + " Amps " + measuredPower.ToString("f2") + " Watt " + measuredWork.ToString("f2") + " KWh");
+            Debug.Print("Rfm69 event, Collector: " + decimalValue.ToString("f2") + "°C, Storage: " + t2_decimal_value.ToString("f2") + "°C, Water: " + t3_decimal_value.ToString("f2") + "°C");
 #endif
 
             activateWatchdogIfAllowedAndNotYetRunning();
@@ -909,8 +917,8 @@ namespace HeatingCurrentSurvey
                     _sensorValueArr_Out[i] = new SensorValue(AzureSendManager._timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
 
                 }
-                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                    // T_1 : Current
-                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = cutPower;                        // T_2 : Power, limited to a max. Value
+                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                    // T_1 : 
+                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                // T_2 : 
 
                 // RoSchmi
                 // T_3 : 
@@ -988,8 +996,8 @@ namespace HeatingCurrentSurvey
                 #endregion
 
                 #region If sendInterval has expired, send contents of the buffer to Azure
+                if (_azureSendThreads < 5)
                 //if (_azureSendThreads == 0)
-                if (_azureSendThreads == 0)
                 {
                     lock (MainThreadLock)
                     {
@@ -1137,7 +1145,7 @@ namespace HeatingCurrentSurvey
             double logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
 
             double measuredPower = (double)e.Val_2 / 100;
-            double cutPower = (measuredPower > 6000) ? 60 : (measuredPower / 100);
+            double t2_decimal_value = (measuredPower > 6000) ? 60 : (measuredPower / 100);
 
             double measuredWork = (double)Reform_uint16_2_float32.Convert((UInt16)(e.Val_3 >> 16), (UInt16)(e.Val_3 & 0x0000FFFF));
 
@@ -1315,7 +1323,7 @@ namespace HeatingCurrentSurvey
 
                 }
                 _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                    // T_1 : Current
-                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = cutPower;                        // T_2 : Power, limited to a max. Value
+                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                        // T_2 : Power, limited to a max. Value
 
                 // RoSchmi
                 // T_3 : Work of this day

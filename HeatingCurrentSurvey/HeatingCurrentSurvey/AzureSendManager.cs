@@ -476,11 +476,11 @@ namespace HeatingSurvey
                     {
                         if (createTableReturnCode == HttpStatusCode.Created)
                         {
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, createTableReturnCode, 3, tableName + _Table_created));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, createTableReturnCode, 3, tableName + _Table_created));
                         }
                         else
                         {
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 4, tableName + _Table_already_exists));
                         }
                       
                         yearOfLastSend = DateTime.Now.Year;
@@ -499,7 +499,7 @@ namespace HeatingSurvey
                         }
                         else
                         {     
-                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
+                            this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 5, tableName + _Failed_to_create_Table));
                             Thread.Sleep(10000);
                             Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
                             while (true)
@@ -644,7 +644,7 @@ namespace HeatingSurvey
 
                     if (insertEntityReturnCode == HttpStatusCode.Conflict)
                     {
-                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, true, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
+                        this.OnAzureCommandSend(this, new AzureSendEventArgs(false, false, HttpStatusCode.Ambiguous, 7, tableName + _Entity_already_created_deleted_from_buffer + reverseDate));
                     }
                     else
                     {
