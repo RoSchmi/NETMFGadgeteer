@@ -53,7 +53,7 @@ namespace HeatingSurvey
         #region fields belonging to Queue Buffer
         // This is the Queue to hold the measured values
         //private const int _defaultCapacity = 256;
-        private const int _defaultCapacity = 32;
+        private const int _defaultCapacity = 20;
 
         private const int _defaultPreFillLevel = 1;
         private static bool _preFillLevelReached = true;

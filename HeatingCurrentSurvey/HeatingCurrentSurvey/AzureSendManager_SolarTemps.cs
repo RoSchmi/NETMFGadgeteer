@@ -1,5 +1,3 @@
-// Adapted for HeatingCurrentSurvey 10. March 2020
-
 using System;
 using Microsoft.SPOT;
 using System.Collections;
@@ -10,12 +8,11 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using RoSchmi.DayLihtSavingTime;
 
-
 namespace HeatingSurvey
 {
-    class AzureSendManager : AzureSendManagerBase
+    class AzureSendManager_SolarTemps : AzureSendManagerBase
     {
-        private static readonly object theLock = new object();
+         private static readonly object theLock = new object();
 
         #region fields belonging to AzureSendManager
         //****************  SendManager *************************************
@@ -50,10 +47,10 @@ namespace HeatingSurvey
 
         public static double[] _lastContent = new double[8] { InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue };
 
-        public static double _dayMinWork = 0.00;   //don't change
-        public static double _dayMaxWork = 0.00;  //don't change
-        public static double _dayMinWorkBefore = 0.00;
-        public static double _dayMaxWorkBefore = 0.00;
+        //public static double _dayMinWork = 0.00;   //don't change
+        //public static double _dayMaxWork = 0.00;  //don't change
+        //public static double _dayMinWorkBefore = 0.00;
+        //public static double _dayMaxWorkBefore = 0.00;
 
 
         public static DateTime sampleTimeOfLastSent;  // initial value is set in ProgramStarted
@@ -247,7 +244,7 @@ namespace HeatingSurvey
 
 
         #region AzureSendManager Constructor
-        public AzureSendManager(CloudStorageAccount pCloudStorageAccount, int pTimeZoneOffset, string pDstStart, string pDstEnd, int pDstOffset, string pTablePreFix, string pSensorValueHeader, string pSocketSensorHeader, X509Certificate[] pCaCerts, DateTime pTimeOfLastSend, TimeSpan pSendInterval, int pAzureSends, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
+        public AzureSendManager_SolarTemps(CloudStorageAccount pCloudStorageAccount, int pTimeZoneOffset, string pDstStart, string pDstEnd, int pDstOffset, string pTablePreFix, string pSensorValueHeader, string pSocketSensorHeader, X509Certificate[] pCaCerts, DateTime pTimeOfLastSend, TimeSpan pSendInterval, int pAzureSends, AzureStorageHelper.DebugMode pDebugMode, AzureStorageHelper.DebugLevel pDebugLevel, IPAddress pFiddlerIPAddress, bool pAttachFiddler, int pFiddlerPort, bool pUseHttps)
             : base(pCloudStorageAccount, pTimeZoneOffset, pDstStart, pDstEnd, pDstOffset, pCaCerts, pDebugMode, pDebugLevel, pFiddlerIPAddress, pAttachFiddler, pFiddlerPort, pUseHttps)
         {
             _useHttps = pUseHttps;
@@ -321,9 +318,8 @@ namespace HeatingSurvey
                             // RoSchmi
                             //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
                             _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
-                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _dayMinWorkBefore = _dayMinWork;
-                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                            _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());                         
+                           
 
                         }
                         catch { }
@@ -343,8 +339,7 @@ namespace HeatingSurvey
                             //_lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
                             _lastContent[Ch_5_Sel - 1] = double.Parse(entityHashtable["T_5"].ToString());
                             _lastContent[Ch_6_Sel - 1] = double.Parse(entityHashtable["T_6"].ToString());
-                            _dayMinWorkBefore = _dayMinWork;
-                            _dayMinWork = _lastContent[Ch_6_Sel - 1];
+                            
                         }
                         catch { }
                     }
@@ -830,7 +825,7 @@ namespace HeatingSurvey
         /// <param name="sender">The <see cref="R_433_Receiver"/> object that raised the event.</param>
         /// <param name="e">The event arguments.</param>
         //public delegate void SignalReceivedEventHandler(RF_433_Receiver sender, SignalReceivedEventArgs e);
-        public delegate void AzureSendManagerEventHandler(AzureSendManager sender, AzureSendEventArgs e);
+        public delegate void AzureSendManagerEventHandler(AzureSendManager_SolarTemps sender, AzureSendEventArgs e);
 
         /// <summary>
         /// Raised when the module detects an 433 Mhz signal.
@@ -839,7 +834,7 @@ namespace HeatingSurvey
 
         private AzureSendManagerEventHandler onAzureCommandSend;
 
-        private void OnAzureCommandSend(AzureSendManager sender, AzureSendEventArgs e)
+        private void OnAzureCommandSend(AzureSendManager_SolarTemps sender, AzureSendEventArgs e)
         {
             if (this.onAzureCommandSend == null)
             {
@@ -851,4 +846,6 @@ namespace HeatingSurvey
         }
         #endregion
     }
+
 }
+

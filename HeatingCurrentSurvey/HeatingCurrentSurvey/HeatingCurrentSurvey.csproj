@@ -34,6 +34,7 @@
     <Compile Include="AzureSendManager_Boiler.cs" />
     <Compile Include="AzureSendManager_Burner.cs" />
     <Compile Include="AzureSendManager_Solar.cs" />
+    <Compile Include="AzureSendManager_SolarTemps.cs" />
     <Compile Include="Counters.cs" />
     <Compile Include="FixedTimeService.cs" />
     <Compile Include="OnOffAnalogSensorMgr.cs" />

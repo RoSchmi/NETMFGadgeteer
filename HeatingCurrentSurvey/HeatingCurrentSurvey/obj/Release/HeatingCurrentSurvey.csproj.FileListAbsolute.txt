@@ -61,3 +61,9 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\obj\Release\le\HeatingCurrentSurvey.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\obj\Release\HeatingCurrentSurvey.exe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\obj\Release\HeatingCurrentSurvey.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\LE\JSON_NETMF_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\BE\JSON_NETMF_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\LE\JSON_NETMF_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\BE\JSON_NETMF_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\JSON_NETMF_Dll.dll
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\JSON_NETMF_Dll.pdb
