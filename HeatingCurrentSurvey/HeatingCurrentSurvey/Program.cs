@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.2 vom 8. August 2020, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.3 vom 19. August 2020, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -16,17 +16,24 @@
 // The only thing you need to set in this dialog is the MAC address; make sure it's the same address as shown on the sticker 
 // on your board. This may not be strictly necessary in all cases, but you want them to match, and you will need a valid 
 // MAC address for most routers.
+// Zur sicheren Datenübertragung mit https muss mittels des Programms 'MfDeploy' die SSL-Seed vorbesetzt werden
 //
 // Gegenüber der Vorgängerversion wurde die Auswertung der Daten eines Smartmeters zur Stromverbrauchsmessung integriert
 // Gegenüber der Vorgängerversion wurde Auswertung der Temperaturen der Solarthermieanlage integriert
-// Die Vorgänger Version ist das Projekt HeatingSurvey im Ordner HeatingSurvey_3
-// Änderung: Es wurde eine zweite Schiene zur Überwachung der Speicherpumpe realisiert
-// Änderung: Umfangreiche Änderungen mit base Klassen für AzureSendManager und SensorMgr
-// Änderung: Zusätzliche Rfm69 Empfänger
-// Änderung: Der Rowkey entspricht nun der lokalen Zeitzonen-Zeit unter Berücksichtigung der Sommerzeit
-// Der Spalte SampleTime wurde als Anhang die aktuelle Verschiebung gegenüber UTC als Anhang beigefügt
+//
+// Die Daten von Solarpumpe, Smartmeter und Solarthermie werden von separaten Micrcontroller-Nodes über Rfm69 Funk übertragen
+// Eine Anwendung läuft auf einem FeatherM0 Rfm69 Board (Feather_Rfm69_Power_a_Heating_Survey)
+// Die zweite Anwendung läuft auf einem Moteino Rfm69 Board (MoteinoReadAnalogRfm69)
+// Verlauf: 1) Es wurde eine zweite Tabelle zur Überwachung der Speicherpumpe realisiert
+// Verlauf: 2) Umfangreiche Änderungen mit base Klassen für AzureSendManager und SensorMgr
+// Verlauf: 3) Zusätzlicher Rfm69 Empfänger um Sensordaten, die per Funk übermittelt werden darzustellen
+// Verlauf: 4) Der Rowkey entspricht nun der lokalen Zeitzonen-Zeit unter Berücksichtigung der Sommerzeit
+// Verlauf: 5) Der Spalte SampleTime wurde als Anhang die aktuelle Verschiebung gegenüber UTC als Anhang beigefügt
+// Verlauf: 6) Zusätzliche Tabelle (Solar) zur Überwachung der Pumpe der Solarthermieanlage
+// Verlauf: 7) Zusätzliche Tabelle zur Überwachung des Stromverbrauchs durch Auslesung der Daten eines Smartmeters
+// Verlauf: 8) Zusätzliche Tabelle zu Überwachung von drei Temperaturen der Solarthermieanlage (Collector, Speicher, Brauchwasser)
 
-#define DebugPrint
+//#define DebugPrint
 
 using System;
 using System.Threading;
@@ -139,7 +146,8 @@ namespace HeatingCurrentSurvey
 
         // You can select what kind of Debug.Print messages are sent
 
-        public static AzureStorageHelper.DebugMode _AzureDebugMode = AzureStorageHelper.DebugMode.StandardDebug;
+        //public static AzureStorageHelper.DebugMode _AzureDebugMode = AzureStorageHelper.DebugMode.StandardDebug;
+        public static AzureStorageHelper.DebugMode _AzureDebugMode = AzureStorageHelper.DebugMode.NoDebug;
         public static AzureStorageHelper.DebugLevel _AzureDebugLevel = AzureStorageHelper.DebugLevel.DebugAll;
 
         // To use Fiddler as WebProxy set attachFiddler = true and set the proper IPAddress and port
@@ -175,19 +183,14 @@ namespace HeatingCurrentSurvey
         //
 
         
-        /*
-        private static string _tablePreFix_Burner = "OnOff01";    // Preset, comes in the sensor eventhandler
-        private static string _tablePreFix_Boiler = "OnOff02";    // Preset, comes in the sensor eventhandle
-        private static string _tablePreFix_Solar = "OnOff03";     // Preset, comes in the sensor eventhandle
-        private static string _tablePreFix_Current = "Current";   // Preset, comes in the sensor eventhandle
-        */
+        
         private static string _tablePreFix_Burner = "Brenner";          // Preset, comes in the sensor eventhandler
         private static string _tablePreFix_Boiler = "BoilerHeizung";    // Preset, comes in the sensor eventhandle
         private static string _tablePreFix_Solar = "Solar";             // Preset, comes in the sensor eventhandle
         private const string  _tablePreFix_Current = "Current";         // Preset, comes in the sensor eventhandle
         private const string _tablePreFix_SolarTemps = "SolarTemps";    // Preset, comes in the sensor eventhandle
 
-        private const string  _tablePreFix_Definition_3 = "SolarTemps";   // Preset, doesn' come in the sensor eventhandle
+        private const string  _tablePreFix_Definition_3 = "SolarTemps";   // Preset, doesn't come in the sensor eventhandle
 
         
 
@@ -211,14 +214,15 @@ namespace HeatingCurrentSurvey
         private static string _sensorValueHeader_Boiler = "OnOff";
         private static string _sensorValueHeader_Solar  = "OnOff";
         private static string _sensorValueHeader_Current = "logAmp";
-        private static string _sensorValueHeader_SolarTemps = " °C ";
+        private static string _sensorValueHeader_SolarTemps = "Coll";
 
 
 
         private static string _socketSensorHeader_Burner = "";  // (not used in this App)
         private static string _socketSensorHeader_Boiler = "";  // (not used in this App)
         private static string _socketSensorHeader_Solar = "";  // (not used in this App)
-        private static string _socketSensorHeader_Current = "Current"; 
+        private static string _socketSensorHeader_Current = "Current";
+        private static string _socketSensorHeader_SolarTemps = "ST";
 
 
         #endregion
@@ -280,25 +284,7 @@ namespace HeatingCurrentSurvey
         // RoSchmi
         static TimeSpan makeInvalidTimeSpan = new TimeSpan(2, 15, 0);  // When this timespan has elapsed, old sensor values are set to invalid
 
-        //private  static double _dayMin = 1000.00;   //don't change
-        //private static double _dayMax = -1000.00;  //don't change
-        //private static double _lastValue = InValidValue;
-
-        //private static double[] _lastTemperature = new double[8] { InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue, InValidValue };
-
-        //private  static double _dayMinWork = 0.00;   //don't change
-        //private  static double _dayMaxWork = 0.00;  //don't change
-        //private static double _dayMinWorkBefore = 0.00;
-        //private static double _dayMaxWorkBefore = 0.00;
         
-        
-        //private static DateTime _timeOfLastSensorEvent_2 = DateTime.Now;
-
-        //private static DateTime _timeOfLastSend = DateTime.Now;
-        
-
-        //private static DateTime _timeOfLastSensorEvent = DateTime.Now;
-
         private static string _lastResetCause;
         //private static DateTime _timeOfLastSensorEvent;
 
@@ -644,7 +630,7 @@ namespace HeatingCurrentSurvey
             AzureSendManager.sampleTimeOfLastSent = DateTime.Now.AddDays(-10.0);    // Date in the past
             AzureSendManager.InitializeQueue();
 
-            myAzureSendManager_SolarTemps = new AzureSendManager_SolarTemps(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, _tablePreFix_SolarTemps, _sensorValueHeader_SolarTemps, _socketSensorHeader_Current, caCerts, DateTime.Now, sendInterval_SolarTemps, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
+            myAzureSendManager_SolarTemps = new AzureSendManager_SolarTemps(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, _tablePreFix_SolarTemps, _sensorValueHeader_SolarTemps, _socketSensorHeader_SolarTemps, caCerts, DateTime.Now, sendInterval_SolarTemps, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
             AzureSendManager_SolarTemps.sampleTimeOfLastSent = DateTime.Now.AddDays(-10.0);    // Date in the past
             AzureSendManager_SolarTemps.InitializeQueue();
             
@@ -711,31 +697,22 @@ namespace HeatingCurrentSurvey
             }          
         }
 
-        
-      
-
         #endregion
 
-      //************************************************************************************************************************************************************************  
-        
-
+  
         #region Event SolarPumpSolarTempsDataSensor_SignalReceived
         static void mySolarPumpCurrentSensor_rfm69SolarTempsDataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
         {
-            // This eventmanager is for the case when Continuous Sensordata from the Smartmeter were sent
+            // This eventmanager is for the case when Continuous Sensordata from the solar thermal system were sent
             string outString = string.Empty;
             bool forceSend = false;
+
             // The magic word EscapeTableLocation_03 makes, that not the tabelname from e is used, but from the const _tablePreFix_Definition_3
             string tablePreFix = (e.DestinationTable == "EscapeTableLocation_03") ? _tablePreFix_Definition_3 : e.DestinationTable;
 
             double dayMaxBefore = AzureSendManager_SolarTemps._dayMax < 0 ? 0.00 : AzureSendManager_SolarTemps._dayMax;
             double dayMinBefore = AzureSendManager_SolarTemps._dayMin > 70 ? 0.00 : AzureSendManager_SolarTemps._dayMin;
-
-
-           
-
-
-            
+     
 
             double decimalValue = (double)(((double)e.Val_1 / 10) - 70);      // T1
             decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 140) ? 140.0 : decimalValue;
@@ -743,10 +720,7 @@ namespace HeatingCurrentSurvey
             double t2_decimal_value = (double)((double)(e.Val_2 - 700) / 10);   // T_2
             t2_decimal_value = ((t2_decimal_value > 140) || (t2_decimal_value < -40)) ? InValidValue : t2_decimal_value;
 
-            //double cutPower = (double)((double)(e.Val_2 - 700) / 10);   // T_2
-            //cutPower = ((cutPower > 140) || (cutPower < -40)) ? InValidValue : cutPower;
-
-            double logCurrent = 0;
+            double logCurrent = decimalValue;
             double t3_decimal_value = (double)((double)(e.Val_3 - 700) / 10);   // T_3
             t3_decimal_value = ((t3_decimal_value > 140) || (t3_decimal_value < -40)) ? InValidValue : t3_decimal_value;
 
@@ -1003,7 +977,7 @@ namespace HeatingCurrentSurvey
                         _azureSendThreads++;
                     }
                     // RoSchmi
-                    myAzureSendManager_SolarTemps = new AzureSendManager_SolarTemps(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, tablePreFix, _sensorValueHeader_Current, _socketSensorHeader_Current, caCerts, timeOfThisEvent, sendInterval_Current, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
+                    myAzureSendManager_SolarTemps = new AzureSendManager_SolarTemps(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, tablePreFix, _sensorValueHeader_SolarTemps, _socketSensorHeader_SolarTemps, caCerts, timeOfThisEvent, sendInterval_Current, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
                     myAzureSendManager_SolarTemps.AzureCommandSend += myAzureSendManager_SolarTemps_AzureCommandSend;
                         
                     
@@ -1013,9 +987,7 @@ namespace HeatingCurrentSurvey
                     myAzureSendManager_SolarTemps.Start();
 
                     //RoSchmi
-                    // if last send was yesterday: write 
-
-                    
+                    // if last send was yesterday: write                  
                     var last = copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1).Day;
 
                     var theAct = timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day;
@@ -1124,19 +1096,7 @@ namespace HeatingCurrentSurvey
 
         }
         #endregion
-
-
-
-
-
-//*************************************************************************************************************************************************************
-
-
-
-
-
-
-        
+   
         #region Event SolarPumpCurrentDataSensor_SignalReceived
         static void mySolarPumpCurrentSensor_rfm69DataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
         {
@@ -1228,8 +1188,6 @@ namespace HeatingCurrentSurvey
             #endregion
 
 
-           
-
             #region After a reboot: Read the last stored entity from Azure to actualize the counters
             if (AzureSendManager._iteration == 0)    // The system has rebooted: We read the last entity from the Cloud
             {
@@ -1239,8 +1197,7 @@ namespace HeatingCurrentSurvey
                 _azureSends = _counters.AzureSends > _azureSends ? _counters.AzureSends : _azureSends;
                 _forcedReboots = _counters.ForcedReboots > _forcedReboots ? _counters.ForcedReboots : _forcedReboots;
                 _badReboots = _counters.BadReboots > _badReboots ? _counters.BadReboots : _badReboots;
-                //_dayMinWorkBefore = _dayMinWork;
-                //_dayMinWork = _counters.DayMinWork > _dayMinWork ? _counters.DayMinWork : _dayMinWork;
+                
 
                 forceSend = true;
                 // actualize to consider the timedelay caused by reading from the cloud
@@ -1265,8 +1222,6 @@ namespace HeatingCurrentSurvey
 
             DateTime copyTimeOfLastSend = AzureSendManager._timeOfLastSend;
 
-            //copyTimeOfLastSend = copyTimeOfLastSend.AddDays(-1);
-
             TimeSpan timeFromLastSend = timeOfThisEvent - copyTimeOfLastSend;
 
             double daylightCorrectOffset = DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true);
@@ -1290,12 +1245,8 @@ namespace HeatingCurrentSurvey
             if ((timeFromLastSend > AzureSendManager._sendInterval) || forceSend)
             {
                 #region actualize the values of minumum and maximum measurements of the day
-
-
-                //RoSchmi
-                //if (_timeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                if (AzureSendManager._timeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                //if (_timeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1.0).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
+            
+                if (AzureSendManager._timeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)              
                 {
                     // same day as event before
                     AzureSendManager._dayMaxWork = t5_decimal_value;     // measuredWork
@@ -1331,13 +1282,11 @@ namespace HeatingCurrentSurvey
                 AzureSendManager._lastValue = decimalValue;
 
                 for (int i = 0; i < 8; i++)
-                {
-                    //_sensorValueArr_Out[i] = new SensorValue(_timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
+                {                  
                     _sensorValueArr_Out[i] = new SensorValue(AzureSendManager._timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
-
                 }
-                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                    // T_1 : Current
-                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                        // T_2 : Power, limited to a max. Value
+                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                     // T_1 : Current
+                _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                 // T_2 : Power, limited to a max. Value
 
                 // RoSchmi
                 // T_3 : Work of this day
@@ -1540,568 +1489,12 @@ namespace HeatingCurrentSurvey
 
         }
         #endregion
-
         
-        
-        #region Event SolarPumpCurrentDataSensor_SignalReceived           Old Version with commonly used eventhandler outcommented
-        /*
-        static void mySolarPumpCurrentSensor_rfm69DataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
-        {
-                // This eventmanager is for the case when Coninuous Sensordata (not switching of the pump) were sent
-                // Continuos data can come from the smartmeter or can come from the solar controller
-
-                string outString = string.Empty;
-                bool forceSend = false;
-                string tablePreFix = e.DestinationTable;
-
-          
-                #region Preset some table parameters like Row Headers
-                // Here we set some table parameters which where transmitted in the eventhandler and were set in the constructor of the RF_433_Receiver Class
-                
-                // RoSchmi
-                // should think about if Program variables should be used
-                _partitionKey_Current = e.SensorLabel;
-                _location_Current = e.SensorLocation;
-                _sensorValueHeader_Current = e.MeasuredQuantity;
-                _socketSensorHeader_Current = "NU";
-
-                SampleValue theRow;
-
-                double decimalValue = 0;               
-                double measuredPower = 0;
-                double cutPower = 0;
-                double measuredWork = 0;
-                double t3_decimal_value = 0;
-                double logCurrent = 0;
-
-                double dayMaxBefore = 0;
-                double dayMinBefore = 0;
-
-                double dayMaxBefore_3 = 0;
-                double dayMinBefore_3 = 0;
-
-               
-
-                #endregion
-
-                if (e.DestinationTable == "EscapeTableLocation_03")        // Calculate values for solar control temperatures
-                {
-                    tablePreFix = _tablePreFix_Current_3;   // local varible                  
-                    decimalValue = (double)(((double)e.Val_1 / 10) - 70);                   
-                    decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 140) ? 140.0 : decimalValue;
-                    cutPower = (double)((double)(e.Val_2 - 700) / 10);   // T_2
-                    cutPower = ((cutPower > 140) || (cutPower < -40)) ? InValidValue : cutPower;
-         * 
-                    t3_decimal_value = (double)((double)(e.Val_3 - 700) / 10);   // T_3
-                    t3_decimal_value = ((t3_decimal_value > 140) || (t3_decimal_value < -40)) ? InValidValue : t3_decimal_value;
-                    dayMaxBefore_3 = AzureSendManager._dayMax_3 < -70.0 ? -70.0 : AzureSendManager._dayMax_3;
-                    dayMinBefore_3 = AzureSendManager._dayMin_3 > 140 ? 140.00 : AzureSendManager._dayMin_3;
-                }
-                else                           // Calculate values for smartmeter readings               
-                {
-                    decimalValue = (double)e.Val_1 / 100;
-                    decimalValue = ((decimalValue > 70) || (decimalValue < 0)) ? InValidValue : decimalValue;
-                    measuredPower = ((double)e.Val_2 / 100);
-                    cutPower = (measuredPower > 6000) ? 60 : (measuredPower / 100);
-                    measuredWork = (double)Reform_uint16_2_float32.Convert((UInt16)(e.Val_3 >> 16), (UInt16)(e.Val_3 & 0x0000FFFF));                 
-                    logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
-                    dayMaxBefore = AzureSendManager._dayMax < 0 ? 0.00 : AzureSendManager._dayMax;
-                    dayMinBefore = AzureSendManager._dayMin > 70 ? 0.00 : AzureSendManager._dayMin;
-                }
-
-                
-                
-                                   
-
-#if SD_Card_Logging
-                var source = new LogContent() { logOrigin = "Event: RF 433 Signal received", logReason = "n", logPosition = "RF 433 event Start", logNumber = 1 };
-                SdLoggerService.LogEventHourly("Normal", source);
-#endif
-                       
-#if DebugPrint
-                Debug.Print("Rfm69 event, Data: " + decimalValue.ToString("f2") + " Amps " + measuredPower.ToString("f2") + " Watt " + measuredWork.ToString("f2") + " KWh");
-#endif
-
-                activateWatchdogIfAllowedAndNotYetRunning();
-                              
-                DateTime timeOfThisEvent = DateTime.Now;
-                AzureSendManager._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
-                                                             // when no sensor events occure in a certain timespan
-
-                string switchMessage = "Switch Message Preset";
-                string switchState = "???";
-                string actCurrent = "???";
-
-                #region Test if timeService is running. If not, try to initialize
-                if (!timeServiceIsRunning)
-                {
-                    if (DateTime.Now < new DateTime(2016, 7, 1))
-                    {
-#if DebugPrint
-                        Debug.Print("Going to set the time in rf_433_Receiver_SignalReceived event");
-#endif
-                        try { GHI.Processor.Watchdog.ResetCounter(); }
-                        catch { };
-                        SetTime(timeZoneOffset, TimeServer_1, TimeServer_2);
-                        Thread.Sleep(200);
-                    }
-                    else
-                    {
-                        timeServiceIsRunning = true;
-                    }
-                    if (!timeServiceIsRunning)
-                    {
-#if DebugPrint
-                        Debug.Print("Sending aborted since timeservice is not running");
-#endif
-                        return;
-                    }
-                }
-                #endregion
-
-                #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
-
-                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current, _sensorValueHeader_Current });
-
-                #endregion
-               
-
-                
-
-                #region After a reboot: Read the last stored entity from Azure to actualize the counters
-
-
-
-                // The system has rebooted: We read the last entity from the Cloud
-                //if (e.DestinationTable == "EscapeTableLocation_03" ? (AzureSendManager._iteration_3 == 0) : (AzureSendManager._iteration == 0))    // The system has rebooted: We read the last entity from the Cloud
-
-
-                if (e.DestinationTable == "EscapeTableLocation_03")      // SolarTemps
-                {
-                    if (AzureSendManager._iteration_3 == 0)
-                    {
-
-                        _counters = myAzureSendManager.ActualizeFromLastAzureRow(ref switchMessage, tablePreFix + DateTime.Now.Year);
-
-                        _azureSendErrors = _counters.AzureSendErrors > _azureSendErrors ? _counters.AzureSendErrors : _azureSendErrors;
-                        _azureSends = _counters.AzureSends > _azureSends ? _counters.AzureSends : _azureSends;
-                        _forcedReboots = _counters.ForcedReboots > _forcedReboots ? _counters.ForcedReboots : _forcedReboots;
-                        _badReboots = _counters.BadReboots > _badReboots ? _counters.BadReboots : _badReboots;
-                        //_dayMinWorkBefore = _dayMinWork;
-                        //_dayMinWork = _counters.DayMinWork > _dayMinWork ? _counters.DayMinWork : _dayMinWork;
-
-                        forceSend = true;
-                        // actualize to consider the timedelay caused by reading from the cloud
-                        timeOfThisEvent = DateTime.Now;
-
-                        AzureSendManager._timeOfLastSensorEvent = timeOfThisEvent;
-                    }
-
-                }
-                else                                                   // Current
-               
-                {
-                    if (AzureSendManager._iteration == 0)
-                    {
-
-                        _counters = myAzureSendManager.ActualizeFromLastAzureRow(ref switchMessage, tablePreFix + DateTime.Now.Year);
-
-                        _azureSendErrors = _counters.AzureSendErrors > _azureSendErrors ? _counters.AzureSendErrors : _azureSendErrors;
-                        _azureSends = _counters.AzureSends > _azureSends ? _counters.AzureSends : _azureSends;
-                        _forcedReboots = _counters.ForcedReboots > _forcedReboots ? _counters.ForcedReboots : _forcedReboots;
-                        _badReboots = _counters.BadReboots > _badReboots ? _counters.BadReboots : _badReboots;
-                        //_dayMinWorkBefore = _dayMinWork;
-                        //_dayMinWork = _counters.DayMinWork > _dayMinWork ? _counters.DayMinWork : _dayMinWork;
-
-                        forceSend = true;
-                        // actualize to consider the timedelay caused by reading from the cloud
-                        timeOfThisEvent = DateTime.Now;
-
-                        AzureSendManager._timeOfLastSensorEvent = timeOfThisEvent;
-                    }
-                
-                }
-   
-                #endregion
-
-                // when every sample value shall be sent to Azure, remove the outcomment of the next two lines
-                //forceSend = true;                 
-                //switchMessage = "Sending was forced by Program";              
-
-                #region Check if we still have enough free ram (memory leak in https) and evtl. prepare for resetting the mainboard
-                uint remainingRam = Debug.GC(false);            // Get remaining Ram because of the memory leak in https
-                bool willReboot = (remainingRam < freeRamThreshold);     // If the ram is below this value, the Mainboard will reboot
-                if (willReboot)
-                {
-                    forceSend = true;
-                    switchMessage = "Going to reboot the Mainboard due to not enough free RAM";
-                }
-                #endregion
-
-                DateTime copyTimeOfLastSend = AzureSendManager._timeOfLastSend;
-
-                
-
-                TimeSpan timeFromLastSend = timeOfThisEvent - copyTimeOfLastSend;
-
-                double daylightCorrectOffset = DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true);
-
-                #region Set the partitionKey
-                //string partitionKey = _partitionKey_Current;                    // Set Partition Key for Azure storage table
-                string partitionKey = e.SensorLabel;                    // Set Partition Key for Azure storage table
-                if (augmentPartitionKey == true)                        // if wanted, augment with year and month (12 - month for right order)
-                //{ partitionKey = partitionKey + DateTime.Now.ToString("yyyy") + "-" + X_Stellig.Zahl((12 - DateTime.Now.Month).ToString(), 2); }
-                { partitionKey = partitionKey + DateTime.Now.AddMinutes(daylightCorrectOffset).ToString("yyyy") + "-" + X_Stellig.Zahl((12 - DateTime.Now.AddMinutes(daylightCorrectOffset).Month).ToString(), 2); }
-                #endregion
-
-                #region Regex test for proper content of the Message property in the Azure table
-                // The regex test can be outcommented if the string is valid
-                if (!_stringRegex.IsMatch(switchMessage))
-                { throw new NotSupportedException("Some charcters [<>] may not be used in this string"); }
-                #endregion
-
-
-                #region If sendInterval has expired, write new sample value row to the queue buffer and start writing to Azure
-                // RoSchmi
-                if ((timeFromLastSend > AzureSendManager._sendInterval) || forceSend)
-                {
-                    #region actualize the values of minumum and maximum measurements of the day
-
-
-                    //RoSchmi
-                    //if (_timeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                    if (AzureSendManager._timeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                    //if (_timeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1.0).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                    {
-                        if (e.DestinationTable == "EscapeTableLocation_03")        // Calculate values for solar control temperatures
-                        {
-                            if ((decimalValue > AzureSendManager._dayMax_3) && (decimalValue < 140.0))
-                            {
-                                AzureSendManager._dayMax_3 = decimalValue;
-                            }
-                            if ((decimalValue > -70.0) && (decimalValue < AzureSendManager._dayMin_3))
-                            {
-                                AzureSendManager._dayMin_3 = decimalValue;
-                            }
-                        }
-                        else
-                        {
-                            
-                                // same day as event before
-                                AzureSendManager._dayMaxWork = measuredWork;
-                                if (AzureSendManager._dayMinWork < 0.1)
-                                {
-                                    AzureSendManager._dayMinWork = measuredWork;
-                                }
-                                if ((decimalValue > AzureSendManager._dayMax) && (decimalValue < 70.0))
-                                {
-                                    AzureSendManager._dayMax = decimalValue;
-                                }
-                                if ((decimalValue > -39.0) && (decimalValue < AzureSendManager._dayMin))
-                                {
-                                    AzureSendManager._dayMin = decimalValue;
-                                }                           
-                        }             
-                    }
-                    else
-                    {
-                        // first event of a new day
-
-                        if (e.DestinationTable == "EscapeTableLocation_03")        // Calculate values for solar control temperatures
-                        {
-                            if ((decimalValue > -70.0) && (decimalValue < 140.0))
-                            {
-                                AzureSendManager._dayMax_3 = decimalValue;
-                                AzureSendManager._dayMin_3 = decimalValue;
-                            }
-                        }
-                        else
-                        {
-                            if ((decimalValue > -39.0) && (decimalValue < 70.0))
-                            {
-                                AzureSendManager._dayMax = decimalValue;
-                                AzureSendManager._dayMin = decimalValue;
-                            }
-                            AzureSendManager._dayMinWorkBefore = AzureSendManager._dayMinWork;
-                            AzureSendManager._dayMinWork = measuredWork;
-                            AzureSendManager._dayMaxWorkBefore = AzureSendManager._dayMaxWork;
-                            AzureSendManager._dayMaxWork = measuredWork;
-                        }                     
-                    }
-                    #endregion
-
-                    AzureSendManager._lastValue = decimalValue;
-
-                    // RoSchmi
-                    lock (MainThreadLock)
-                    {
-
-                        for (int i = 0; i < 8; i++)
-                        {
-
-                            _sensorValueArr_Out[i] = new SensorValue(AzureSendManager._timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
-
-                        }
-                        _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;            // T_1 : Current
-                        _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = cutPower;                // T_2 : Power, limited to a max. Value or Storage Temp
-
-                        // RoSchmi
-                        // T_3 : Work of this day
-                        if (tablePreFix == e.DestinationTable)      // Current
-                        {
-                            _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = ((AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork) <= 0) ? 0.00 : AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork;
-                            _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble < 14 ? _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble * 5 : 70.00;    // set limit to 70 and change scale
-                            _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble = measuredPower;               // T_4 : Power
-                            _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble = measuredWork;                // T_5 : Work
-                            _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble = AzureSendManager._dayMinWork;    // T_6 : Work at start of day                              
-                        }
-                        else
-                        {
-                            _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = t3_decimal_value;
-                        }
-
-
-                        if (e.DestinationTable == "EscapeTableLocation_03")
-                        {
-                            AzureSendManager._iteration_3++;
-                        }
-                        else
-                        {
-                            AzureSendManager._iteration++;
-                        }
-
-                            double dayMinAct = tablePreFix == e.DestinationTable ? AzureSendManager._dayMin : AzureSendManager._dayMin_3;
-                            double dayMaxAct = tablePreFix == e.DestinationTable ? AzureSendManager._dayMax : AzureSendManager._dayMax_3;
-
-                            int iterationAct = tablePreFix == e.DestinationTable ? AzureSendManager._iteration : AzureSendManager._iteration_3;
-
-
-                            theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, dayMinAct, dayMaxAct,
-                           _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_3_Sel - 1].RandomId, _sensorValueArr_Out[Ch_3_Sel - 1].Hum, _sensorValueArr_Out[Ch_3_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_4_Sel - 1].RandomId, _sensorValueArr_Out[Ch_4_Sel - 1].Hum, _sensorValueArr_Out[Ch_4_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_5_Sel - 1].RandomId, _sensorValueArr_Out[Ch_5_Sel - 1].Hum, _sensorValueArr_Out[Ch_5_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_6_Sel - 1].RandomId, _sensorValueArr_Out[Ch_6_Sel - 1].Hum, _sensorValueArr_Out[Ch_6_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_7_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_7_Sel - 1].RandomId, _sensorValueArr_Out[Ch_7_Sel - 1].Hum, _sensorValueArr_Out[Ch_7_Sel - 1].BatteryIsLow,
-                           _sensorValueArr_Out[Ch_8_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_8_Sel - 1].RandomId, _sensorValueArr_Out[Ch_8_Sel - 1].Hum, _sensorValueArr_Out[Ch_8_Sel - 1].BatteryIsLow,
-                           actCurrent, switchState, _location_Current, timeFromLastSend, e.RepeatSend, e.RSSI, iterationAct, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
-
-                           if (e.DestinationTable != "EscapeTableLocation_03")    //   Current
-                           {
-
-                                if (AzureSendManager._iteration == 1)
-                                
-                                {
-                                    if (timeFromLastSend < makeInvalidTimeSpan)   // after reboot for the first time take values which were read back from the Cloud
-                                    {
-                                        //theRow.T_0 = AzureSendManager._lastContent[Ch_1_Sel - 1];
-                                        //theRow.T_1 = AzureSendManager._lastContent[Ch_2_Sel - 1];
-                                        theRow.T_2 = AzureSendManager._lastContent[Ch_3_Sel - 1];
-                                        //theRow.T_3 = AzureSendManager._lastContent[Ch_4_Sel - 1];
-                                        //theRow.T_4 = AzureSendManager._lastContent[Ch_5_Sel - 1];
-
-                                        //theRow.T_5 = AzureSendManager._lastContent[Ch_6_Sel - 1];
-
-                                        //theRow.T_6 = AzureSendManager._lastContent[Ch_7_Sel - 1];
-                                        //theRow.T_7 = AzureSendManager._lastContent[Ch_8_Sel - 1];
-                                    }
-                                    else
-                                    {
-                                        //theRow.T_0 = InValidValue;
-                                        //theRow.T_1 = InValidValue;
-                                        theRow.T_2 = InValidValue;
-                                        //theRow.T_3 = InValidValue;
-                                        //theRow.T_4 = InValidValue;
-                                        theRow.T_5 = InValidValue;
-                                        //theRow.T_6 = InValidValue;
-                                        //theRow.T_7 = InValidValue;
-                                    }
-                                }
-                        }
-                                          
-
-                        if (AzureSendManager.hasFreePlaces())
-                        {
-                            AzureSendManager.EnqueueSampleValue(theRow);
-
-                            // RoSchmi
-                            //copyTimeOfLastSend = timeOfThisEvent;
-                            AzureSendManager._timeOfLastSend = timeOfThisEvent;
-
-                            //Debug.Print("\r\nRow was writen to the Buffer. Number of rows in the buffer = " + AzureSendManager.Count + ", still " + (AzureSendManager.capacity - AzureSendManager.Count).ToString() + " places free");
-                        }
-                    }      // End lock
-
-                    // optionally send message to Debug.Print  
-                    //SampleValue theReturn = AzureSendManager.PreViewNextSampleValue();
-                    //DateTime thatTime = theReturn.TimeOfSample;
-                    //double thatDouble = theReturn.TheSampleValue;
-                    //Debug.Print("The Temperature: " + thatDouble.ToString() + "  at: " + thatTime.ToString());
-
-            
-
-                #endregion
-
-
-                #region ligth a multicolour led asynchronously to indicate action
-#if MulticolorLed
-                myMulticolorLedAsync.light("green", 3000);
-#endif
-                #endregion
-
-                #region If sendInterval has expired, send contents of the buffer to Azure
-                    //if (_azureSendThreads == 0)
-                    if (_azureSendThreads == 0)
-                    {
-                      lock (MainThreadLock)
-                      {
-                            _azureSendThreads++;
-                      }
-                        // RoSchmi
-                        myAzureSendManager = new AzureSendManager(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, tablePreFix, _sensorValueHeader_Current, _socketSensorHeader_Current, caCerts, timeOfThisEvent, sendInterval_Current, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
-                        
-                        
-                        
-                        myAzureSendManager.AzureCommandSend += myAzureSendManager_AzureCommandSend;
-
-
-                        try { GHI.Processor.Watchdog.ResetCounter(); }
-                        catch { };
-                        _Print_Debug("\r\nRow was sent on its way to Azure");
-                        myAzureSendManager.Start();
-
-                        //RoSchmi
-                        // if last send was yesterday: write 
-                        var last = copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1).Day;
-
-                        var theAct = timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day;
-                        
-                        if (copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).AddDays(1).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)      
-                        {
-                            for (int i = 0; i < 8; i++)
-                            {
-                                _sensorValueArr_Out[i] = new SensorValue(copyTimeOfLastSend, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
-
-                            }
-
-                            _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = AzureSendManager._dayMinWorkBefore;
-                            _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = AzureSendManager._dayMaxWorkBefore;
-                           
-
-                            forceSend = true;
-
-
-                            theRow = new SampleValue(tablePreFix, partitionKey, copyTimeOfLastSend.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, 
-                                copyTimeOfLastSend, true)), timeZoneOffset + (int)daylightCorrectOffset, AzureSendManager._dayMaxWorkBefore - AzureSendManager._dayMinWorkBefore, dayMinBefore, dayMaxBefore,
-                               _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_3_Sel - 1].RandomId, _sensorValueArr_Out[Ch_3_Sel - 1].Hum, _sensorValueArr_Out[Ch_3_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_4_Sel - 1].RandomId, _sensorValueArr_Out[Ch_4_Sel - 1].Hum, _sensorValueArr_Out[Ch_4_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_5_Sel - 1].RandomId, _sensorValueArr_Out[Ch_5_Sel - 1].Hum, _sensorValueArr_Out[Ch_5_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_6_Sel - 1].RandomId, _sensorValueArr_Out[Ch_6_Sel - 1].Hum, _sensorValueArr_Out[Ch_6_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_7_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_7_Sel - 1].RandomId, _sensorValueArr_Out[Ch_7_Sel - 1].Hum, _sensorValueArr_Out[Ch_7_Sel - 1].BatteryIsLow,
-                               _sensorValueArr_Out[Ch_8_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_8_Sel - 1].RandomId, _sensorValueArr_Out[Ch_8_Sel - 1].Hum, _sensorValueArr_Out[Ch_8_Sel - 1].BatteryIsLow,
-                               " ", " ", _location_Current, new TimeSpan(0), e.RepeatSend, e.RSSI, AzureSendManager._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
-
-                            
-                            // RoSchmi
-                            waitForCurrentCallback.Reset();
-                            //waitForCurrentCallback.WaitOne(50000, true);     // Wait for 50 seconds ??
-                            waitForCurrentCallback.WaitOne(5000, true);        // Changed to 5 sec
-
-
-                            
-                            //waitForSolarTempsCallback.Reset();
-                            //waitForSolarTempsCallback.WaitOne(50000, true);
-                            
-
-
-                            Thread.Sleep(5000); // Wait additional 5 sec for last thread AzureSendManager Thread to finish
-                            AzureSendManager.EnqueueSampleValue(theRow);
-                            // RoSchmi
-                            myAzureSendManager = new AzureSendManager(myCloudStorageAccount, timeZoneOffset, dstStart, dstEnd, dstOffset, e.DestinationTable + "Days", "Work", _socketSensorHeader_Current, caCerts, timeOfThisEvent, sendInterval_Current, _azureSends, _AzureDebugMode, _AzureDebugLevel, IPAddress.Parse(fiddlerIPAddress), pAttachFiddler: attachFiddler, pFiddlerPort: fiddlerPort, pUseHttps: Azure_useHTTPS);
-                            myAzureSendManager.AzureCommandSend += myAzureSendManager_AzureCommandSend;
-                            try { GHI.Processor.Watchdog.ResetCounter(); }
-                            catch { };
-                            //_Print_Debug("\r\nRow was sent on its way to Azure");
-#if DebugPrint
-                            Debug.Print("\r\nLast Row of day was sent on its way to Azure");
-#endif
-
-                            myAzureSendManager.Start();
-
-                        }
-                    }
-                    else
-                    {
-                        _azureSendThreadResetCounter++;
-#if DebugPrint
-                        Debug.Print("_azureSendThreadResetCounter = " + _azureSendThreadResetCounter.ToString());
-#endif
-                        if (_azureSendThreadResetCounter > 5)   // when _azureSendThread != 0 we write the next 5 rows coming through sensor events only to the buffer
-                        // this should give outstanding requests time to finish
-                        // then we reset the counters
-                        {
-                            _azureSendThreadResetCounter = 0;
-                            _azureSendThreads = 0;
-                        }
-                    }
-                // RoSchmi
-                
-                }
-                else
-                {
-#if MulticolorLed
-                myMulticolorLedAsync.light("red", 200);
-#endif
-#if DebugPrint
-                    Debug.Print("\r\nRow was discarded, sendInterval was not expired ");
-#endif
-                }
-                
-
-#if DebugPrint
-                Debug.Print("\r\nRemaining Ram:" + remainingRam.ToString() + "\r\n");
-#endif
-                    #endregion
-
-                #region Prepare rebooting of the mainboard e.g. if not enough ram due to memory leak
-                if (_willRebootAfterNextEvent)
-                {
-#if DebugPrint
-                    Debug.Print("Board is going to reboot in 3000 ms\r\n");
-#endif
-                    Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
-                }
-                if (willReboot)
-                { _willRebootAfterNextEvent = true; }
-                #endregion
-#if DisplayN18
-            displayN18.Clear();
-            displayN18.Orientation = GTM.Module.DisplayModule.DisplayOrientation.Clockwise90Degrees;
-            if (lastOutString != string.Empty)
-            { displayN18.SimpleGraphics.DisplayText(lastOutString, RenderingFont, Gadgeteer.Color.Black, 1, 1); }
-            lastOutString = outString.Substring(48, 8) + " " + outString.Substring(88, 8);
-            displayN18.SimpleGraphics.DisplayText(lastOutString, RenderingFont, Gadgeteer.Color.Orange, 1, 1);
-#endif
-#if SD_Card_Logging
-                source = new LogContent() { logOrigin = "Event: RF 433 Signal received", logReason = "n", logPosition = "End of method", logNumber = 1 };
-                SdLoggerService.LogEventHourly("Normal", source);
-#endif
-
-        }
-         */
-        #endregion
-        
-
-
         #region Event SolarPumpOnOffSensor Signal received
 
         static void mySolarPumpCurrentSensor_rfm69OnOffSensorSend(OnOffRfm69SensorMgr sender, OnOffBaseSensorMgr.OnOffSensorEventArgs e)
         {
             
-
             string switchMessage = " ";
             bool forceSend = true;
 
@@ -2167,12 +1560,7 @@ namespace HeatingCurrentSurvey
 
             #endregion
 
-
-
-
-
-
-            
+        
             #region Check if we still have enough free ram (memory leak in https) and evtl. prepare for resetting the mainboard
             uint remainingRam = Debug.GC(false);            // Get remaining Ram because of the memory leak in https
             bool willReboot = (remainingRam < freeRamThreshold);     // If the ram is below this value, the Mainboard will reboot
@@ -2208,34 +1596,6 @@ namespace HeatingCurrentSurvey
             //double daylightCorrectOffset = DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true);
             if ((timeFromLastSend > AzureSendManager_Solar._sendInterval) || forceSend)
             {
-                #region actualize the values of minumum and maximum measurements of the day
-
-                //if (copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                if (copyTimeOfLastSend.AddMinutes(daylightCorrectOffset).Day == timeOfThisEvent.AddMinutes(daylightCorrectOffset).Day)
-                {
-                    /*
-                    if ((decimalValue > _dayMax) && (decimalValue < 70.0))
-                    {  
-                        _dayMax = decimalValue;
-                    }
-                    if ((decimalValue > -39.0) && (decimalValue < _dayMin))
-                    {
-                        _dayMin = decimalValue;
-                    }
-                    */
-                }
-                else
-                {
-                    /*
-                    if ((decimalValue > -39.0) && (decimalValue < 70.0))
-                        _dayMax = decimalValue;
-                    _dayMin = decimalValue;
-                    */
-                }
-                #endregion
-
-
-
                 if (e.ActState == true)       // if switched off
                 {
                     if (AzureSendManager_Solar._iteration != 0)
@@ -2328,7 +1688,7 @@ namespace HeatingCurrentSurvey
                 //_iteration++;
                 AzureSendManager_Solar._iteration++;
 
-                //float work = Reform_uint16_2_float32.Convert((UInt16)(e.Val_3 >> 16), (UInt16)(e.Val_3 & 0x0000FFFF));
+                
                 float work = 0;
 
                 //float work = Reform_uint16_2_float32.Convert(e.Val_3_High, e.Val_3_Low);

@@ -191,7 +191,7 @@ namespace HeatingSurvey
                     {
                         OnRfm69SolarTempsDataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
                         // Destination Table is changed to "EscapeTableLocation_03" (Magic String)
-                       // OnRfm69DataSensorSend(this, new DataSensorEventArgs(DateTime.Now.AddMinutes(RoSchmi.DayLihtSavingTime.DayLihtSavingTime.DayLightTimeOffset(dstStart, dstEnd, dstOffset, DateTime.Now, true)), repeatSend, current, power, work, SensorLabel, SensorLocation, MeasuredQuantityContinuous, "EscapeTableLocation_03", Channel, false));
+                       
                     }
                 }
             }
