@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NETMF_FritzBox_FritzDect_Test", "NETMF_FritzBox_FritzDect_Test\NETMF_FritzBox_FritzDect_Test.csproj", "{17317AF1-3DF2-4D82-81BB-272AA5313212}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EthernetJ11D_Dll", "EthernetJ11D_Dll\EthernetJ11D_Dll.csproj", "{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DayLihtSavingTime_Dll", "DayLihtSavingTime_Dll\DayLihtSavingTime_Dll.csproj", "{D640BCD3-46DD-441A-9FBC-E041FA02008E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17317AF1-3DF2-4D82-81BB-272AA5313212}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D640BCD3-46DD-441A-9FBC-E041FA02008E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D640BCD3-46DD-441A-9FBC-E041FA02008E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D640BCD3-46DD-441A-9FBC-E041FA02008E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D640BCD3-46DD-441A-9FBC-E041FA02008E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
