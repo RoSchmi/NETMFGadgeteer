@@ -105,8 +105,8 @@ namespace HeatingCurrentSurvey
         //private static int timeZoneOffset = -500;
         //private static int timeZoneOffset = -300;     // New York offest in minutes of your timezone to Greenwich Mean Time (GMT)
         //private static int timeZoneOffset = -60;
-        // private static int timeZoneOffset = 0;       // Lissabon offest in minutes of your timezone to Greenwich Mean Time (GMT)
-          private static int timeZoneOffset = 60;      // Berlin offest in minutes of your timezone to Greenwich Mean Time (GMT)
+        //private static int timeZoneOffset = 0;       // Lissabon offest in minutes of your timezone to Greenwich Mean Time (GMT)
+        private static int timeZoneOffset = 60;      // Berlin offest in minutes of your timezone to Greenwich Mean Time (GMT)
         //private static int timeZoneOffset = 120;
         //private static int timeZoneOffset = 180;     // Moskau offest in minutes of your timezone to Greenwich Mean Time (GMT) 
         //private static int timeZoneOffset = 240;
@@ -135,8 +135,8 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_SolarTemps = new TimeSpan(0, 0, 1);
 
         // RoSchmi
-        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
-        private static bool workWithWatchDog = false; 
+        private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        //private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec     
 
@@ -172,8 +172,8 @@ namespace HeatingCurrentSurvey
        
 
         // choose whether http or https shall be used
-           private const bool Azure_useHTTPS = true;
-           //private const bool Azure_useHTTPS = false;
+           //private const bool Azure_useHTTPS = true;
+           private const bool Azure_useHTTPS = false;
        
 
         // Preset for the Name of the Azure storage table 
@@ -352,11 +352,11 @@ namespace HeatingCurrentSurvey
             if (GHI.Processor.Watchdog.LastResetCause == GHI.Processor.Watchdog.ResetCause.Watchdog)
             {
                 _lastResetCause = " Watchdog";
-                Debug.Print("Last Reset Cause: Watchdog");
+                //Debug.Print("Last Reset Cause: Watchdog");
             }
             else
             {
-                Debug.Print("Last Reset Cause: Power/Reset");
+                //Debug.Print("Last Reset Cause: Power/Reset");
             }
             if (GHI.Processor.Watchdog.Enabled)
             {
@@ -724,9 +724,15 @@ namespace HeatingCurrentSurvey
             double t3_decimal_value = (double)((double)(e.Val_3 - 700) / 10);   // T_3
             t3_decimal_value = ((t3_decimal_value > 140) || (t3_decimal_value < -40)) ? InValidValue : t3_decimal_value;
 
-            double t4_decimal_value = InValidValue;         // T4
-            double t5_decimal_value = InValidValue;         // T_5
-            double t6_decimal_value = InValidValue;         // T_6
+            int MacId = 0;    // To monitor if the MAC-Address always stays the same, we write the sum of their bytes in T4
+            foreach (byte place in netif.PhysicalAddress)
+            {
+                MacId += place;
+            }
+
+            double t4_decimal_value = (double)MacId;         // T4
+            double t5_decimal_value = InValidValue;          // T_5
+            double t6_decimal_value = InValidValue;          // T_6
 
            
 

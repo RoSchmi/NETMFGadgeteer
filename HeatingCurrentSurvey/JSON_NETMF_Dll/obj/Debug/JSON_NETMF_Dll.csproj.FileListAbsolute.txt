@@ -65,3 +65,5 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Debug\le\JSON_NETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Debug\JSON_NETMF_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Debug\JSON_NETMF_Dll.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Debug\JSON_NETMF_Dll.csprojResolveAssemblyReference.cache
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Debug\TinyCLR_DebugReferences.cache

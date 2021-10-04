@@ -34,6 +34,8 @@ namespace HeatingSurvey
 
         private const UInt16 firstAfterBootMagicNumber = 999;
 
+        private static int Rfm69EventsCounter = 0;
+
         #endregion
 
         int lastPacketNum = -1;
@@ -44,6 +46,9 @@ namespace HeatingSurvey
         string MeasuredQuantityContinuous;
 
         public static RFM69_NETMF radio;
+
+
+        private static readonly object Rfm69SensorLock = new object();
 
         public OnOffRfm69SensorMgr(GHI.Processor.DeviceType deviceType, int socketNumber, int pDstOffset, string pDstStart, string pDstEnd, string pSensorLabel = "undef", string pSensorLocation = "undef", string pMeasuredQuantity = "undef", string pMeasuredQuantityContinuous = "undef", string pDestinationTableOnOff = "undef", string pDestinationTableContinuous = "undef", string pChannel = "000")
         {
@@ -137,6 +142,14 @@ namespace HeatingSurvey
 #endif
             if (!_stopped)
             {
+                // RoSchmi
+                Rfm69EventsCounter++;
+                if (Rfm69EventsCounter > 1)
+                {
+                    Debug.Print("More than one Rfm69 event processed at a time");
+                    //throw new NotSupportedException("More than one Rfm69 event processed at a time");
+                }
+
                 actPacketNum = int.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 0, 3)));
                 UInt16 sendInfo = UInt16.Parse(new string(Encoding.UTF8.GetChars(e.receivedData, 8, 4)));
                 UInt16 repeatSend = sendInfo;
@@ -194,7 +207,9 @@ namespace HeatingSurvey
                        
                     }
                 }
-            }
+
+                Rfm69EventsCounter--;
+            }      // End if not stopped
         }
 
         void radio_ACKReturned(RFM69_NETMF sender, RFM69_NETMF.ACK_EventArgs e)
