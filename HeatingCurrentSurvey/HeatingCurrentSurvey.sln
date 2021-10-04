@@ -4,6 +4,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatingCurrentSurvey", "HeatingCurrentSurvey\HeatingCurrentSurvey.csproj", "{CCCFE148-068B-4B22-9CB2-B2501E516DAF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{470AB70B-767C-448E-97FF-68018A8FDC8A} = {470AB70B-767C-448E-97FF-68018A8FDC8A}
+		{9A2BEF70-2ED2-46EE-80C2-46DEA47B630B} = {9A2BEF70-2ED2-46EE-80C2-46DEA47B630B}
+		{67C3DB96-B65F-4AC1-9564-78509230F498} = {67C3DB96-B65F-4AC1-9564-78509230F498}
+		{D640BCD3-46DD-441A-9FBC-E041FA02008E} = {D640BCD3-46DD-441A-9FBC-E041FA02008E}
+		{032E3DEB-7E43-40EC-9DB8-D2CD79A01902} = {032E3DEB-7E43-40EC-9DB8-D2CD79A01902}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ButtonNETMF_Dll", "ButtonNETMF_Dll\ButtonNETMF_Dll.csproj", "{9A2BEF70-2ED2-46EE-80C2-46DEA47B630B}"
 EndProject
@@ -12,6 +19,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EthernetJ11D_Dll", "EthernetJ11D_Dll\EthernetJ11D_Dll.csproj", "{032E3DEB-7E43-40EC-9DB8-D2CD79A01902}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSON_NETMF_Dll", "JSON_NETMF_Dll\JSON_NETMF_Dll.csproj", "{470AB70B-767C-448E-97FF-68018A8FDC8A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FritzBox_FritzDect_Dll", "..\..\Projects\NETMF_FritzBox_FritzDect_DLL\FritzBox_FritzDect_Dll\FritzBox_FritzDect_Dll.csproj", "{67C3DB96-B65F-4AC1-9564-78509230F498}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +50,10 @@ Global
 		{470AB70B-767C-448E-97FF-68018A8FDC8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{470AB70B-767C-448E-97FF-68018A8FDC8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{470AB70B-767C-448E-97FF-68018A8FDC8A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67C3DB96-B65F-4AC1-9564-78509230F498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67C3DB96-B65F-4AC1-9564-78509230F498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67C3DB96-B65F-4AC1-9564-78509230F498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67C3DB96-B65F-4AC1-9564-78509230F498}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

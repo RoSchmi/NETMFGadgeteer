@@ -61,6 +61,7 @@ using RoSchmi.ButtonNETMF;
 using RoSchmi.DayLihtSavingTime;
 using RoSchmi.RFM69_NETMF;
 using RoSchmi.Utilities;
+using RoSchmi.Net.Fritzbox;
 using PervasiveDigital;
 using PervasiveDigital.Json;
 //using HeatingCurrentSurvey;
@@ -135,8 +136,8 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_SolarTemps = new TimeSpan(0, 0, 1);
 
         // RoSchmi
-        private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
-        //private static bool workWithWatchDog = false; 
+        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec     
 
@@ -337,12 +338,24 @@ namespace HeatingCurrentSurvey
 
         static SampleHoldValue[] _samplHoldValues = new SampleHoldValue[8];   // To hold the last value for a time when there is a temp discordant value
 
+        static string fritzBoxUser = Resources.GetString(Resources.StringResources.FritzBoxUser);
+        static string fritzBoxPassword = Resources.GetString(Resources.StringResources.FritzBoxPassword);
+        static string fritzUrl = Resources.GetString(Resources.StringResources.FritzBoxUrl);
+        static bool useHttps = false;
+
+
+        static string FRITZ_DEVICE_AIN_01 = Resources.GetString(Resources.StringResources.FritzDect_Ain_01); // e.g. "126580760143" Ain of Fritz!Dect switchable power socket
+
+        static NETMF_FritzAPI fritz = new NETMF_FritzAPI(fritzBoxUser, fritzBoxPassword, fritzUrl, useHttps);
+
 
         #endregion
 
         #region Main
         public static void Main()
         {
+
+            
 
            // Debug.Print(Resources.GetString(Resources.StringResources.String1));
 
@@ -605,6 +618,16 @@ namespace HeatingCurrentSurvey
             }
 
             #endregion
+
+
+            if (fritz.init())
+            {
+                Debug.Print("Fritz is initialized");
+            }
+
+            string theEnergy = fritz.getSwitchEnergy(FRITZ_DEVICE_AIN_01);
+            Debug.Print(double.Parse(theEnergy).ToString("F1"));
+
 
             #region Set some Presets for Azure Table and others
            

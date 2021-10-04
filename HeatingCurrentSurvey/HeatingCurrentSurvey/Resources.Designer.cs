@@ -39,6 +39,10 @@ namespace HeatingCurrentSurvey
             AzureAccountName = -17596,
             AzureAccountKey = -13890,
             String1 = 1228,
+            FritzBoxUser = 5264,
+            FritzBoxUrl = 10070,
+            FritzBoxPassword = 23444,
+            FritzDect_Ain_01 = 23551,
         }
         [System.SerializableAttribute()]
         internal enum BinaryResources : short

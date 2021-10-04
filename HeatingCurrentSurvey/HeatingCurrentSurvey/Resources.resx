@@ -127,6 +127,18 @@
   <data name="DigiCert_Baltimore_Root" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\DigiCert Baltimore Root.cer;System.Byte[], mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null</value>
   </data>
+  <data name="FritzBoxPassword" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\FritzBoxPassword.txt;System.String, mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null;Windows-1252</value>
+  </data>
+  <data name="FritzBoxUrl" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\FritzboxUrl.txt;System.String, mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null;Windows-1252</value>
+  </data>
+  <data name="FritzBoxUser" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\FritzBoxUser.txt;System.String, mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null;Windows-1252</value>
+  </data>
+  <data name="FritzDect_Ain_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\FritzDect_Ain_01.txt;System.String, mscorlib, Version=4.3.1.0, Culture=neutral, PublicKeyToken=null;Windows-1252</value>
+  </data>
   <data name="String1" xml:space="preserve">
     <value>Hello World!</value>
   </data>

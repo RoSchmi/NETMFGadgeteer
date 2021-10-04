@@ -104,11 +104,11 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\bin\Debug\GHI.Networking.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\bin\Debug\GHI.Hardware.xml
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\bin\Debug\GHI.Networking.xml
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\EthernetJ11D_Dll.csprojResolveAssemblyReference.cache
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\TinyCLR_DebugReferences.cache
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\be\EthernetJ11D_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\be\EthernetJ11D_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\le\EthernetJ11D_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\le\EthernetJ11D_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\EthernetJ11D_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\EthernetJ11D_Dll.pdb
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\EthernetJ11D_Dll.csprojResolveAssemblyReference.cache
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\EthernetJ11D_Dll\obj\Debug\TinyCLR_DebugReferences.cache
