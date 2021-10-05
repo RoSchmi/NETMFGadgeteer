@@ -1138,10 +1138,8 @@ namespace HeatingCurrentSurvey
             double dayMaxBefore = AzureSendManager._dayMax < 0 ? 0.00 : AzureSendManager._dayMax;
             double dayMinBefore = AzureSendManager._dayMin > 70 ? 0.00 : AzureSendManager._dayMin;
 
-
-
             double decimalValue = (double)e.Val_1 / 100;
-            decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 140) ? 140.0 : decimalValue;
+            decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 160) ? 160.0 : decimalValue;
             //decimalValue = ((decimalValue > 70) || (decimalValue < 0)) ? InValidValue : decimalValue;
             
 
