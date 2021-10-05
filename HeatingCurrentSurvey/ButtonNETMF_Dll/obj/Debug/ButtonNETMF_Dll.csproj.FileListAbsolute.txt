@@ -108,3 +108,4 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\le\ButtonNETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\ButtonNETMF_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\ButtonNETMF_Dll.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Debug\ButtonNETMF_Dll.csprojResolveAssemblyReference.cache

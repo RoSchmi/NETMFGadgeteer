@@ -1,9 +1,10 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.3 vom 19. August 2020, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.4 vom 05. Oktober 2021, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
 // der Boilerheizungspumpe zur Brauchwassererwärmung, der Pumpe einer Solarthermieanlage und dem
-// gemessenen Strom eines Smartmeters und der Messung von 3 Temperaturen einer Solarthermieanlage 
+// gemessenen Strom eines Smartmeters, der Messung von 3 Temperaturen einer Solarthermieanlage
+// und der erzeugten Energie eins Solarmoduls. 
 // Wenn der Brenner läuft wird der Eingang durch die Interface Elektronik auf low gezogen
 // Bei jedem Wechsel des Status wird ein Datensatz mit Timestamp und den bisher gelaufenen Zeiten
 // (Tag, Woche, Monat und Jahr) in der Azure Cloud in einer Storage Table abgelegt.
@@ -20,6 +21,8 @@
 //
 // Gegenüber der Vorgängerversion wurde die Auswertung der Daten eines Smartmeters zur Stromverbrauchsmessung integriert
 // Gegenüber der Vorgängerversion wurde Auswertung der Temperaturen der Solarthermieanlage integriert
+// Gegenüber der Vorgängerversion wurde die Auswertung der Energiegewinnung einer Solarzelle über die Fritzbox und eine
+// Fritz!Dect schaltbare Steckdose integriert.
 //
 // Die Daten von Solarpumpe, Smartmeter und Solarthermie werden von separaten Micrcontroller-Nodes über Rfm69 Funk übertragen
 // Eine Anwendung läuft auf einem FeatherM0 Rfm69 Board (Feather_Rfm69_Power_a_Heating_Survey)
@@ -32,6 +35,7 @@
 // Verlauf: 6) Zusätzliche Tabelle (Solar) zur Überwachung der Pumpe der Solarthermieanlage
 // Verlauf: 7) Zusätzliche Tabelle zur Überwachung des Stromverbrauchs durch Auslesung der Daten eines Smartmeters
 // Verlauf: 8) Zusätzliche Tabelle zu Überwachung von drei Temperaturen der Solarthermieanlage (Collector, Speicher, Brauchwasser)
+// Verlauf: 9) Zusätzliche Abfrage der Fritz!Dect Steckdose über die Fritzbox und Speicherung in der Cloud zusammen mit den Stromverbrauchsdaten
 
 //#define DebugPrint
 
@@ -214,7 +218,9 @@ namespace HeatingCurrentSurvey
         private static string _sensorValueHeader_Burner = "OnOff";
         private static string _sensorValueHeader_Boiler = "OnOff";
         private static string _sensorValueHeader_Solar  = "OnOff";
-        private static string _sensorValueHeader_Current = "logAmp";
+        //RoSchmi
+        //private static string _sensorValueHeader_Current = "logAmp";
+        private static string _sensorValueHeader_Current = "T_0";
         private static string _sensorValueHeader_SolarTemps = "Coll";
 
 
@@ -296,6 +302,7 @@ namespace HeatingCurrentSurvey
         // Regex ^: Begin at start of line; [a-zA-Z0-9]: these chars are allowed; [^<>]: these chars ar not allowd; +$: test for every char in string until end of line
         // Is used to exclude some not allowed characters in the strings for the name of the Azure table and the message entity property
         static Regex _tableRegex = new Regex(@"^[a-zA-Z0-9]+$");
+        static Regex _columnRegex = new Regex(@"^[a-zA-Z0-9_]+$");
         static Regex _stringRegex = new Regex(@"^[^<>]+$");
 
         private static int _azureSendThreads = 0;
@@ -619,16 +626,13 @@ namespace HeatingCurrentSurvey
 
             #endregion
 
-
+            // Initialize Access to Fritzbox (get SID and store in NETMF_FritzApi)
             if (fritz.init())
             {
                 Debug.Print("Fritz is initialized");
             }
 
-            string theEnergy = fritz.getSwitchEnergy(FRITZ_DEVICE_AIN_01);
-            Debug.Print(double.Parse(theEnergy).ToString("F1"));
-
-
+           
             #region Set some Presets for Azure Table and others
            
             myCloudStorageAccount = new CloudStorageAccount(myAzureAccount, myAzureKey, useHttps: Azure_useHTTPS);
@@ -821,7 +825,8 @@ namespace HeatingCurrentSurvey
 
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
 
-            RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current, _sensorValueHeader_Current });
+            RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current});
+            RegexTest.ThrowIfNotValid(_columnRegex, new string[] {_sensorValueHeader_Current });
 
             #endregion
 
@@ -1138,12 +1143,23 @@ namespace HeatingCurrentSurvey
             double dayMaxBefore = AzureSendManager._dayMax < 0 ? 0.00 : AzureSendManager._dayMax;
             double dayMinBefore = AzureSendManager._dayMin > 70 ? 0.00 : AzureSendManager._dayMin;
 
-            double decimalValue = (double)e.Val_1 / 100;
-            decimalValue = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 160) ? 160.0 : decimalValue;
-            //decimalValue = ((decimalValue > 70) || (decimalValue < 0)) ? InValidValue : decimalValue;
+            //double decimalValue = (double)e.Val_1 / 100;
+
+            // Get Power from Fritzbox
+            string solarPower = fritz.getSwitchPower(FRITZ_DEVICE_AIN_01);
+
+            double decimalValue = solarPower != null ? double.Parse(solarPower) / 10000 : InValidValue;
+                              
+            double logCurrent = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 160) ? 160.0 : decimalValue;
+
+            string solarEnergy = fritz.getSwitchEnergy(FRITZ_DEVICE_AIN_01);
+
+            
+            //double logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
             
 
-            double logCurrent = System.Math.Log10((decimalValue < 0.01 ? 0.01 : decimalValue) * 100);
+            double solarEnergy_decimal_value = solarEnergy != null ? double.Parse(solarEnergy) / 100 : InValidValue;
+
 
             double t4_decimal_value = (double)e.Val_2 / 100;      // measuredPower
             double t2_decimal_value = (t4_decimal_value > 6000) ? 60 : (t4_decimal_value / 100);
@@ -1210,7 +1226,8 @@ namespace HeatingCurrentSurvey
 
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
 
-            RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current, _sensorValueHeader_Current });
+            RegexTest.ThrowIfNotValid(_tableRegex, new string[] { tablePreFix, _location_Current});
+            RegexTest.ThrowIfNotValid(_columnRegex, new string[] { _sensorValueHeader_Current});
 
             #endregion
 
@@ -1281,6 +1298,14 @@ namespace HeatingCurrentSurvey
                     {
                         AzureSendManager._dayMinWork = t5_decimal_value;  // measuredWork
                     }
+
+                    AzureSendManager._dayMaxSolarWork = solarEnergy_decimal_value;     // measuredSolarWork
+                    if (AzureSendManager._dayMinSolarWork < 0.1)
+                    {
+                        AzureSendManager._dayMinSolarWork = solarEnergy_decimal_value;  // measuredSolarWork
+                    }
+
+
                     if ((decimalValue > AzureSendManager._dayMax) && (decimalValue < 70.0))
                     {
                         AzureSendManager._dayMax = decimalValue;
@@ -1289,6 +1314,7 @@ namespace HeatingCurrentSurvey
                     {
                         AzureSendManager._dayMin = decimalValue;
                     }
+
                 }
                 else
                 {
@@ -1303,6 +1329,14 @@ namespace HeatingCurrentSurvey
                     AzureSendManager._dayMinWork = t5_decimal_value;                        // measuredWork
                     AzureSendManager._dayMaxWorkBefore = AzureSendManager._dayMaxWork;
                     AzureSendManager._dayMaxWork = t5_decimal_value;                        // measuredWork
+
+                    AzureSendManager._dayMinSolarWorkBefore = AzureSendManager._dayMinSolarWork;
+                    AzureSendManager._dayMinSolarWork = solarEnergy_decimal_value;                        // measuredWork
+                    AzureSendManager._dayMaxSolarWorkBefore = AzureSendManager._dayMaxSolarWork;
+                    AzureSendManager._dayMaxSolarWork = solarEnergy_decimal_value;                        // measuredWork
+
+
+
                 }
                 #endregion
 
@@ -1312,13 +1346,21 @@ namespace HeatingCurrentSurvey
                 {                  
                     _sensorValueArr_Out[i] = new SensorValue(AzureSendManager._timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
                 }
-                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                     // T_1 : Current
+                //_sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                     // T_1 : Current
+                //_sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                       // T_1 : Power Solar Plant
+
                 _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                 // T_2 : Power, limited to a max. Value
+
+                //RoSchmi
+                // T_1 : Solar Work of this day
+                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = ((AzureSendManager._dayMaxSolarWork - AzureSendManager._dayMinSolarWork) <= 0) ? 0.00 : AzureSendManager._dayMaxSolarWork - AzureSendManager._dayMinSolarWork;
+                _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble <  9 ? _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble * 10 : 90.00;    // set limit to 90 and change scale
+
 
                 // RoSchmi
                 // T_3 : Work of this day
                 _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = ((AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork) <= 0) ? 0.00 : AzureSendManager._dayMaxWork - AzureSendManager._dayMinWork;
-                _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble < 14 ? _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble * 5 : 70.00;    // set limit to 70 and change scale
+                _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble = _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble < 18 ? _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble * 5 : 90.00;    // set limit to 90 and change scale
 
 
                 _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble = t4_decimal_value;                // T_4 : Power
@@ -1327,7 +1369,7 @@ namespace HeatingCurrentSurvey
 
 
                 AzureSendManager._iteration++;
-
+                /*
                 SampleValue theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, AzureSendManager._dayMin, AzureSendManager._dayMax,
                    _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
                    _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
@@ -1338,6 +1380,22 @@ namespace HeatingCurrentSurvey
                    _sensorValueArr_Out[Ch_7_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_7_Sel - 1].RandomId, _sensorValueArr_Out[Ch_7_Sel - 1].Hum, _sensorValueArr_Out[Ch_7_Sel - 1].BatteryIsLow,
                    _sensorValueArr_Out[Ch_8_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_8_Sel - 1].RandomId, _sensorValueArr_Out[Ch_8_Sel - 1].Hum, _sensorValueArr_Out[Ch_8_Sel - 1].BatteryIsLow,
                    actCurrent, switchState, _location_Current, timeFromLastSend, e.RepeatSend, e.RSSI, AzureSendManager._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
+                */
+
+                //RoSchmi
+                SampleValue theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, AzureSendManager._dayMin, AzureSendManager._dayMax,
+                   _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_3_Sel - 1].RandomId, _sensorValueArr_Out[Ch_3_Sel - 1].Hum, _sensorValueArr_Out[Ch_3_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_4_Sel - 1].RandomId, _sensorValueArr_Out[Ch_4_Sel - 1].Hum, _sensorValueArr_Out[Ch_4_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_5_Sel - 1].RandomId, _sensorValueArr_Out[Ch_5_Sel - 1].Hum, _sensorValueArr_Out[Ch_5_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_6_Sel - 1].RandomId, _sensorValueArr_Out[Ch_6_Sel - 1].Hum, _sensorValueArr_Out[Ch_6_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_7_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_7_Sel - 1].RandomId, _sensorValueArr_Out[Ch_7_Sel - 1].Hum, _sensorValueArr_Out[Ch_7_Sel - 1].BatteryIsLow,
+                   _sensorValueArr_Out[Ch_8_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_8_Sel - 1].RandomId, _sensorValueArr_Out[Ch_8_Sel - 1].Hum, _sensorValueArr_Out[Ch_8_Sel - 1].BatteryIsLow,
+                   actCurrent, switchState, _location_Current, timeFromLastSend, e.RepeatSend, e.RSSI, AzureSendManager._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
+                
+
+
 
 
                 if (AzureSendManager._iteration == 1)
@@ -1555,6 +1613,7 @@ namespace HeatingCurrentSurvey
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
 
             RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
+            RegexTest.ThrowIfNotValid(_columnRegex, new string[] { _sensorValueHeader_Current });
 
             #endregion
 
@@ -1846,7 +1905,8 @@ namespace HeatingCurrentSurvey
 
             #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
 
-                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
+                RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation});
+                RegexTest.ThrowIfNotValid(_columnRegex, new string[] {e.MeasuredQuantity });
 
             #endregion
           
@@ -2121,6 +2181,7 @@ namespace HeatingCurrentSurvey
                 #region Do some tests with RegEx to assure that proper content is transmitted to the Azure table
 
                 RegexTest.ThrowIfNotValid(_tableRegex, new string[] { e.DestinationTable, e.SensorLocation, e.MeasuredQuantity });
+                RegexTest.ThrowIfNotValid(_columnRegex, new string[] { e.MeasuredQuantity });
 
                 #endregion
 

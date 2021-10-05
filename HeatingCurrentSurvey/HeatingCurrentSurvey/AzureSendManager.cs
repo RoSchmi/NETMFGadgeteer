@@ -55,6 +55,11 @@ namespace HeatingSurvey
         public static double _dayMinWorkBefore = 0.00;
         public static double _dayMaxWorkBefore = 0.00;
 
+        public static double _dayMinSolarWork = 0.00;   //don't change
+        public static double _dayMaxSolarWork = 0.00;  //don't change
+        public static double _dayMinSolarWorkBefore = 0.00;
+        public static double _dayMaxSolarWorkBefore = 0.00;
+
 
         public static DateTime sampleTimeOfLastSent;  // initial value is set in ProgramStarted
         public static DateTime _timeOfLastSend;
