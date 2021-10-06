@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2020 License Apache 2.0,  Version 1.4 vom 05. Oktober 2021, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2021 License Apache 2.0,  Version 1.4 vom 06. Oktober 2021, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -140,8 +140,8 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_SolarTemps = new TimeSpan(0, 0, 1);
 
         // RoSchmi
-        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
-        private static bool workWithWatchDog = false; 
+        private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        //private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec     
 
@@ -217,9 +217,7 @@ namespace HeatingCurrentSurvey
 
         private static string _sensorValueHeader_Burner = "OnOff";
         private static string _sensorValueHeader_Boiler = "OnOff";
-        private static string _sensorValueHeader_Solar  = "OnOff";
-        //RoSchmi
-        //private static string _sensorValueHeader_Current = "logAmp";
+        private static string _sensorValueHeader_Solar  = "OnOff";     
         private static string _sensorValueHeader_Current = "T_0";
         private static string _sensorValueHeader_SolarTemps = "Coll";
 
@@ -1140,6 +1138,8 @@ namespace HeatingCurrentSurvey
             // The magic word EscapeTableLocation_03 makes, that not the tabelname from e is used, but from the const _tablePreFix_Definition_3
             string tablePreFix = (e.DestinationTable == "EscapeTableLocation_03") ? _tablePreFix_Definition_3 : e.DestinationTable;
 
+            
+
             double dayMaxBefore = AzureSendManager._dayMax < 0 ? 0.00 : AzureSendManager._dayMax;
             double dayMinBefore = AzureSendManager._dayMin > 70 ? 0.00 : AzureSendManager._dayMin;
 
@@ -1310,7 +1310,7 @@ namespace HeatingCurrentSurvey
                     {
                         AzureSendManager._dayMax = decimalValue;
                     }
-                    if ((decimalValue > -39.0) && (decimalValue < AzureSendManager._dayMin))
+                    if ((decimalValue > -39.0) && ((decimalValue < AzureSendManager._dayMin)) || AzureSendManager._dayMin < 0.001)
                     {
                         AzureSendManager._dayMin = decimalValue;
                     }
@@ -1346,8 +1346,7 @@ namespace HeatingCurrentSurvey
                 {                  
                     _sensorValueArr_Out[i] = new SensorValue(AzureSendManager._timeOfLastSensorEvent, 0, 0, 0, 0, InValidValue, 999, 0x00, false);
                 }
-                //_sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                     // T_1 : Current
-                //_sensorValueArr_Out[Ch_1_Sel - 1].TempDouble = decimalValue;                       // T_1 : Power Solar Plant
+                
 
                 _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble = t2_decimal_value;                 // T_2 : Power, limited to a max. Value
 
@@ -1369,20 +1368,9 @@ namespace HeatingCurrentSurvey
 
 
                 AzureSendManager._iteration++;
-                /*
-                SampleValue theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, AzureSendManager._dayMin, AzureSendManager._dayMax,
-                   _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_3_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_3_Sel - 1].RandomId, _sensorValueArr_Out[Ch_3_Sel - 1].Hum, _sensorValueArr_Out[Ch_3_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_4_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_4_Sel - 1].RandomId, _sensorValueArr_Out[Ch_4_Sel - 1].Hum, _sensorValueArr_Out[Ch_4_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_5_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_5_Sel - 1].RandomId, _sensorValueArr_Out[Ch_5_Sel - 1].Hum, _sensorValueArr_Out[Ch_5_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_6_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_6_Sel - 1].RandomId, _sensorValueArr_Out[Ch_6_Sel - 1].Hum, _sensorValueArr_Out[Ch_6_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_7_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_7_Sel - 1].RandomId, _sensorValueArr_Out[Ch_7_Sel - 1].Hum, _sensorValueArr_Out[Ch_7_Sel - 1].BatteryIsLow,
-                   _sensorValueArr_Out[Ch_8_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_8_Sel - 1].RandomId, _sensorValueArr_Out[Ch_8_Sel - 1].Hum, _sensorValueArr_Out[Ch_8_Sel - 1].BatteryIsLow,
-                   actCurrent, switchState, _location_Current, timeFromLastSend, e.RepeatSend, e.RSSI, AzureSendManager._iteration, remainingRam, _forcedReboots, _badReboots, _azureSendErrors, willReboot ? 'X' : '.', forceSend, forceSend ? switchMessage : "");
-                */
+                
 
-                //RoSchmi
+            
                 SampleValue theRow = new SampleValue(tablePreFix + DateTime.Now.Year, partitionKey, e.Timestamp, timeZoneOffset + (int)daylightCorrectOffset, logCurrent, AzureSendManager._dayMin, AzureSendManager._dayMax,
                    _sensorValueArr_Out[Ch_1_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_1_Sel - 1].RandomId, _sensorValueArr_Out[Ch_1_Sel - 1].Hum, _sensorValueArr_Out[Ch_1_Sel - 1].BatteryIsLow,
                    _sensorValueArr_Out[Ch_2_Sel - 1].TempDouble, _sensorValueArr_Out[Ch_2_Sel - 1].RandomId, _sensorValueArr_Out[Ch_2_Sel - 1].Hum, _sensorValueArr_Out[Ch_2_Sel - 1].BatteryIsLow,
