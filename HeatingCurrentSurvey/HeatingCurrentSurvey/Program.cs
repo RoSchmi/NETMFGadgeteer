@@ -143,7 +143,15 @@ namespace HeatingCurrentSurvey
         //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
         private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
-        // = 50 sec, don't change without need, may not be below 30 sec     
+        // = 50 sec, don't change without need, may not be below 30 sec 
+
+        static Timer _sensorControlTimer;
+        static TimeSpan _sensorControlTimerInterval = new TimeSpan(0, 35, 0);  // 35 minutes
+        // The event handler of this  timer checks if there was an event of the solarPumpCurrentSensor
+        // in the selected time (here 35 min). This means that the program is running but receiving data via RF69 hangs 
+        // in this very rarely occuring case we reset the board
+
+
 
         // If the free ram of the mainboard is below this level it will reboot (because of https memory leak)
         private static int freeRamThreshold = 4300000;
@@ -270,7 +278,6 @@ namespace HeatingCurrentSurvey
         private static bool _hasAddress;
         private static bool _available;
 
-         // The watchdog is activated in the first _sensorControlTimer_Tick event
         private static bool watchDogIsAcitvated = false;// Don't change, choosing is done in the workWithWatchDog variable
         
         static Thread WatchDogCounterResetThread;
@@ -671,7 +678,7 @@ namespace HeatingCurrentSurvey
             #endregion
 
             //_sensorControlTimer = new Timer(new TimerCallback(_sensorControlTimer_Tick), cls, _sensorControlTimerInterval, _sensorControlTimerInterval);
-            //_sensorControlTimer = new Timer(new TimerCallback(_sensorControlTimer_Tick), null, _sensorControlTimerInterval, _sensorControlTimerInterval);
+            _sensorControlTimer = new Timer(new TimerCallback(_sensorControlTimer_Tick), null, _sensorControlTimerInterval, _sensorControlTimerInterval);
 
             if (_deviceType == GHI.Processor.DeviceType.EMX)
             {
@@ -724,7 +731,15 @@ namespace HeatingCurrentSurvey
 
         #endregion
 
-  
+        #region Event SolarPumpSolarTempsDataSensor_SignalReceived
+        static void _sensorControlTimer_Tick(object o)
+        {
+            Microsoft.SPOT.Hardware.PowerState.RebootDevice(true, 3000);
+        }
+
+        #endregion
+
+
         #region Event SolarPumpSolarTempsDataSensor_SignalReceived
         static void mySolarPumpCurrentSensor_rfm69SolarTempsDataSensorSend(OnOffRfm69SensorMgr sender, OnOffRfm69SensorMgr.DataSensorEventArgs e)
         {
@@ -787,7 +802,7 @@ namespace HeatingCurrentSurvey
 
 
             DateTime timeOfThisEvent = DateTime.Now;
-            AzureSendManager_SolarTemps._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
+            AzureSendManager_SolarTemps._timeOfLastSensorEvent = timeOfThisEvent;    
             // when no sensor events occure in a certain timespan
 
             string switchMessage = "Switch Message Preset";
@@ -1189,7 +1204,10 @@ namespace HeatingCurrentSurvey
 
 
             DateTime timeOfThisEvent = DateTime.Now;
-            AzureSendManager._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
+            AzureSendManager._timeOfLastSensorEvent = timeOfThisEvent;
+
+            // Reset _sensorControlTimer, if the timer is not reset, the board will be rebooted
+            _sensorControlTimer = new Timer(new TimerCallback(_sensorControlTimer_Tick), null, _sensorControlTimerInterval, _sensorControlTimerInterval);
             // when no sensor events occure in a certain timespan
 
             string switchMessage = "Switch Message Preset";
@@ -1631,7 +1649,7 @@ namespace HeatingCurrentSurvey
 
 
             DateTime timeOfThisEvent = DateTime.Now;     // Works with no daylightsavingtime correction
-            AzureSendManager_Solar._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
+            AzureSendManager_Solar._timeOfLastSensorEvent = timeOfThisEvent;   
             // when no sensor events occure in a certain timespan
 
 
@@ -1926,8 +1944,7 @@ namespace HeatingCurrentSurvey
             DateTime timeOfThisEvent = DateTime.Now;     // Works with no daylightsavingtime correction
 
             
-            AzureSendManager_Solar._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
-                                                                                 // when no sensor events occure in a certain timespan
+            AzureSendManager_Solar._timeOfLastSensorEvent = timeOfThisEvent;    
 
 
             #region After a reboot: Read the last stored entity from Azure to actualize the counters and minimum and maximum values of the day
@@ -2201,8 +2218,7 @@ namespace HeatingCurrentSurvey
 
                 
                 DateTime timeOfThisEvent = DateTime.Now;     // Works with no daylightsavingtime correction
-                AzureSendManager_Burner._timeOfLastSensorEvent = timeOfThisEvent;    // Refresh the time of the last sensor event so that the _sensorControlTimer will be enabled to react
-                                                                                    // when no sensor events occure in a certain timespan
+                AzureSendManager_Burner._timeOfLastSensorEvent = timeOfThisEvent;   
 
 
                 #region After a reboot: Read the last stored entity from Azure to actualize the counters and minimum and maximum values of the day
