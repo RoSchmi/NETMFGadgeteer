@@ -1,10 +1,10 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2021 License Apache 2.0,  Version 1.4 vom 06. Oktober 2021, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.5 vom 01. April 2022, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
 // der Boilerheizungspumpe zur Brauchwassererwärmung, der Pumpe einer Solarthermieanlage und dem
 // gemessenen Strom eines Smartmeters, der Messung von 3 Temperaturen einer Solarthermieanlage
-// und der erzeugten Energie eins Solarmoduls. 
+// und der erzeugten Energie eines Solarmoduls. 
 // Wenn der Brenner läuft wird der Eingang durch die Interface Elektronik auf low gezogen
 // Bei jedem Wechsel des Status wird ein Datensatz mit Timestamp und den bisher gelaufenen Zeiten
 // (Tag, Woche, Monat und Jahr) in der Azure Cloud in einer Storage Table abgelegt.
@@ -36,6 +36,7 @@
 // Verlauf: 7) Zusätzliche Tabelle zur Überwachung des Stromverbrauchs durch Auslesung der Daten eines Smartmeters
 // Verlauf: 8) Zusätzliche Tabelle zu Überwachung von drei Temperaturen der Solarthermieanlage (Collector, Speicher, Brauchwasser)
 // Verlauf: 9) Zusätzliche Abfrage der Fritz!Dect Steckdose über die Fritzbox und Speicherung in der Cloud zusammen mit den Stromverbrauchsdaten
+// Verlauf: 10) Implementierung eines "_sensorControlTimer", um das board zu rebooten falls keine events mit Stromverbrauchsdaten des Rfm69 Empfängers erfolgen (hangs) 
 
 //#define DebugPrint
 
