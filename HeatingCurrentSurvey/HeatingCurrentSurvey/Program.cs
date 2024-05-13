@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.5 vom 01. April 2022, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.5 vom 15. Juli 2023, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -36,7 +36,8 @@
 // Verlauf: 7) Zusätzliche Tabelle zur Überwachung des Stromverbrauchs durch Auslesung der Daten eines Smartmeters
 // Verlauf: 8) Zusätzliche Tabelle zu Überwachung von drei Temperaturen der Solarthermieanlage (Collector, Speicher, Brauchwasser)
 // Verlauf: 9) Zusätzliche Abfrage der Fritz!Dect Steckdose über die Fritzbox und Speicherung in der Cloud zusammen mit den Stromverbrauchsdaten
-// Verlauf: 10) Implementierung eines "_sensorControlTimer", um das board zu rebooten falls keine events mit Stromverbrauchsdaten des Rfm69 Empfängers erfolgen (hangs) 
+// Verlauf: 10) Implementierung eines "_sensorControlTimer", um das board zu rebooten falls keine events mit Stromverbrauchsdaten des Rfm69 Empfängers erfolgen (hangs)
+
 
 //#define DebugPrint
 
@@ -141,7 +142,7 @@ namespace HeatingCurrentSurvey
         private static TimeSpan sendInterval_SolarTemps = new TimeSpan(0, 0, 1);
 
         // RoSchmi
-        //private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
+        // private static bool workWithWatchDog = true;    // Choose whether the App runs with WatchDog, should normally be set to true
         private static bool workWithWatchDog = false; 
         private static int watchDogTimeOut = 50;        // WatchDog timeout in sec: Max Value for G400 15 sec, G120 134 sec, EMX 4.294 sec
         // = 50 sec, don't change without need, may not be below 30 sec 
