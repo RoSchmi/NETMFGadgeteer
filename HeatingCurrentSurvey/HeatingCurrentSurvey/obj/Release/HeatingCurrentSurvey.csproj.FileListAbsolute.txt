@@ -67,3 +67,9 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\BE\JSON_NETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\JSON_NETMF_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\JSON_NETMF_Dll.pdb
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\LE\FritzBox_FritzDect_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\BE\FritzBox_FritzDect_Dll.pe
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\LE\FritzBox_FritzDect_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\BE\FritzBox_FritzDect_Dll.pdbx
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\FritzBox_FritzDect_Dll.dll
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\HeatingCurrentSurvey\bin\Release\FritzBox_FritzDect_Dll.pdb

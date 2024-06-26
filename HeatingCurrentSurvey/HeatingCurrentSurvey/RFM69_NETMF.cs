@@ -44,7 +44,7 @@
 
 
 // Comment inactive "#define DebugPrint" when the debugger is not connected!!!, otherwise the program will eventually not work properly!
-//#define DebugPrint
+// #define DebugPrint
 
 using System;
 using Microsoft.SPOT;

@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.5 vom 15. Juli 2023, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.6 vom 27. Juli 2024, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -37,7 +37,7 @@
 // Verlauf: 8) Zusätzliche Tabelle zu Überwachung von drei Temperaturen der Solarthermieanlage (Collector, Speicher, Brauchwasser)
 // Verlauf: 9) Zusätzliche Abfrage der Fritz!Dect Steckdose über die Fritzbox und Speicherung in der Cloud zusammen mit den Stromverbrauchsdaten
 // Verlauf: 10) Implementierung eines "_sensorControlTimer", um das board zu rebooten falls keine events mit Stromverbrauchsdaten des Rfm69 Empfängers erfolgen (hangs)
-
+// Verlauf: 11) Umstellung auf DigiCertGlobalRootG2 Zertifikat für https Zugriff auf Azure Table Storage
 
 //#define DebugPrint
 
@@ -187,8 +187,8 @@ namespace HeatingCurrentSurvey
        
 
         // choose whether http or https shall be used
-           //private const bool Azure_useHTTPS = true;
-           private const bool Azure_useHTTPS = false;
+           private const bool Azure_useHTTPS = true;
+           // const bool Azure_useHTTPS = false;
        
 
         // Preset for the Name of the Azure storage table 
@@ -317,7 +317,8 @@ namespace HeatingCurrentSurvey
                
 
         // Certificate of Azure, included as a Resource
-        static byte[] caAzure = Resources.GetBytes(Resources.BinaryResources.DigiCert_Baltimore_Root);
+        //static byte[] caAzure = Resources.GetBytes(Resources.BinaryResources.DigiCert_Baltimore_Root);
+        static byte[] caAzure = Resources.GetBytes(Resources.BinaryResources.DigiCertGlobalRootG2);
 
         // See -https://blog.devmobile.co.nz/2013/03/01/https-with-netmf-http-client-managing-certificates/ how to include a certificate
 

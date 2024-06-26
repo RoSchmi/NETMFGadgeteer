@@ -48,6 +48,7 @@ namespace HeatingCurrentSurvey
         internal enum BinaryResources : short
         {
             DigiCert_Baltimore_Root = -10335,
+            DigiCertGlobalRootG2 = 26599,
         }
     }
 }

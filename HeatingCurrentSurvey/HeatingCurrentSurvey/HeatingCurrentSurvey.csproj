@@ -117,7 +117,9 @@
     <Folder Include="PervasiveDigital\Utilities\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\DigiCert Baltimore Root.cer" />
+    <None Include="Resources\DigiCert Baltimore Root.cer">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AzureAccountKey.txt" />
@@ -132,6 +134,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\DigiCertGlobalRootG2.cer" />
     <None Include="Resources\FritzBoxUser.txt" />
   </ItemGroup>
   <ItemGroup>
