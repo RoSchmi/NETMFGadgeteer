@@ -34,11 +34,9 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\bin\Release\LE\PervasiveDigital.Utility.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\bin\Release\BE\PervasiveDigital.Utility.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\bin\Release\PervasiveDigital.Utility.dll
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\TinyCLR_DebugReferences.cache
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\be\JSON_NETMF_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\be\JSON_NETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\le\JSON_NETMF_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\le\JSON_NETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\JSON_NETMF_Dll.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\JSON_NETMF_Dll.pdb
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\JSON_NETMF_Dll\obj\Release\JSON_NETMF_Dll.csprojResolveAssemblyReference.cache

@@ -20,7 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EthernetJ11D_Dll", "Etherne
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JSON_NETMF_Dll", "JSON_NETMF_Dll\JSON_NETMF_Dll.csproj", "{470AB70B-767C-448E-97FF-68018A8FDC8A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FritzBox_FritzDect_Dll", "..\..\Projects\NETMF_FritzBox_FritzDect_DLL\FritzBox_FritzDect_Dll\FritzBox_FritzDect_Dll.csproj", "{67C3DB96-B65F-4AC1-9564-78509230F498}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FritzBox_FritzDect_Dll", "FritzBox_FritzDect_Dll\FritzBox_FritzDect_Dll.csproj", "{67C3DB96-B65F-4AC1-9564-78509230F498}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

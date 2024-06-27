@@ -128,12 +128,6 @@
     <None Include="Resources\AzureAccountName.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Projects\NETMF_FritzBox_FritzDect_DLL\FritzBox_FritzDect_Dll\FritzBox_FritzDect_Dll.csproj">
-      <Project>{67C3DB96-B65F-4AC1-9564-78509230F498}</Project>
-      <Name>FritzBox_FritzDect_Dll</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\DigiCertGlobalRootG2.cer" />
     <None Include="Resources\FritzBoxUser.txt" />
   </ItemGroup>
@@ -145,6 +139,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\FritzDect_Ain_01.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FritzBox_FritzDect_Dll\FritzBox_FritzDect_Dll.csproj">
+      <Project>{67C3DB96-B65F-4AC1-9564-78509230F498}</Project>
+      <Name>FritzBox_FritzDect_Dll</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Condition="EXISTS('$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets')" Project="$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets" />
   <Import Condition="!EXISTS('$(NetMfTargetsBaseDir)$(TargetFrameworkVersion)\CSharp.Targets')" Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

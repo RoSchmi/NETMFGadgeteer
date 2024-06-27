@@ -50,11 +50,9 @@ C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\bin\Release\GHI.Pins.dll
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\bin\Release\GHI.Hardware.xml
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\bin\Release\GHI.Pins.xml
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\TinyCLR_DebugReferences.cache
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\ButtonNETMF_Dll.dll
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\ButtonNETMF_Dll.pdb
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\be\ButtonNETMF_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\be\ButtonNETMF_Dll.pdbx
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\le\ButtonNETMF_Dll.pe
 C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\le\ButtonNETMF_Dll.pdbx
-C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\ButtonNETMF_Dll.csprojResolveAssemblyReference.cache
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\ButtonNETMF_Dll.dll
+C:\Users\Roland\Documents\Visual Studio 2013\NETMFGadgeteer\HeatingCurrentSurvey\ButtonNETMF_Dll\obj\Release\ButtonNETMF_Dll.pdb
