@@ -1,4 +1,4 @@
-// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022 License Apache 2.0,  Version 1.6 vom 27. Juli 2024, 
+// HeatingCurrentSurvey Program Copyright RoSchmi 2021, 2022, 2023, 2024 License Apache 2.0,  Version 1.6 vom 29. Juli 2024, 
 // NETMF 4.3, GHI SDK 2016 R1
 // Hardware: GHI Spider Mainboard, Ethernet J11D Ethernet module, Sharp PC900V Optokoppler 
 // Dieses Programm dient zur Registrierung der Laufzeiten eines Heizungsbrenners,
@@ -187,8 +187,8 @@ namespace HeatingCurrentSurvey
        
 
         // choose whether http or https shall be used
-           private const bool Azure_useHTTPS = true;
-           // const bool Azure_useHTTPS = false;
+           //private const bool Azure_useHTTPS = true;
+             private const bool Azure_useHTTPS = false;
        
 
         // Preset for the Name of the Azure storage table 
@@ -1169,13 +1169,13 @@ namespace HeatingCurrentSurvey
             // Get Power from Fritzbox
             string solarPower = fritz.getSwitchPower(FRITZ_DEVICE_AIN_01);
 
-            double decimalValue = solarPower != null ? double.Parse(solarPower) / 10000 : InValidValue;                
+            double decimalValue = (solarPower != null) && (solarPower != "inval") ? double.Parse(solarPower) / 10000 : InValidValue;                
             double logCurrent = ((decimalValue > 170) || (decimalValue < -40)) ? InValidValue : (decimalValue > 160) ? 160.0 : decimalValue;
 
             // Get Energy from Fritzbox
             string solarEnergy = fritz.getSwitchEnergy(FRITZ_DEVICE_AIN_01);
 
-            double solarEnergy_decimal_value = solarEnergy != null ? double.Parse(solarEnergy) / 100 : InValidValue;
+            double solarEnergy_decimal_value = (solarPower != null) && (solarPower != "inval") ? double.Parse(solarEnergy) / 100 : InValidValue;
 
 
             double t4_decimal_value = (double)e.Val_2 / 100;      // measuredPower
