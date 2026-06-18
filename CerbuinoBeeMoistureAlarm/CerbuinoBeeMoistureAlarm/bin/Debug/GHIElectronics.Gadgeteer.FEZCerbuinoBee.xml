@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GHIElectronics.Gadgeteer.FEZCerbuinoBee</name>
+    </assembly>
+    <members>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee">
+            <summary>The mainboard class for the FEZ Cerbuino Bee.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.#ctor">
+            <summary>Constructs a new instance.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.GetStorageDeviceVolumeNames">
+            <summary>The storage device volume names supported by this mainboard.</summary>
+            <returns>The volume names.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MountStorageDevice(System.String)">
+            <summary>Mounts the device with the given name.</summary>
+            <param name="volumeName">The device to mount.</param>
+            <returns>Whether or not the mount was successful.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.UnmountStorageDevice(System.String)">
+            <summary>Unmounts the device with the given name.</summary>
+            <param name="volumeName">The device to unmount.</param>
+            <returns>Whether or not the unmount was successful.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.EnsureRgbSocketPinsAvailable">
+            <summary>Ensures that the RGB socket pins are available by disabling the display controller if needed.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SetDebugLED(System.Boolean)">
+            <summary>Sets the state of the debug LED.</summary>
+            <param name="on">The new state.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SetProgrammingMode(Gadgeteer.Mainboard.ProgrammingInterface)">
+            <summary>Sets the programming mode of the device.</summary>
+            <param name="programmingInterface">The new programming mode.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.PostInit">
+            <summary>This performs post-initialization tasks for the mainboard. It is called by Gadgeteer.Program.Run and does not need to be called manually.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbuinoBee.OnOnboardControllerDisplayConnected(System.String,System.Int32,System.Int32,System.Int32,Gadgeteer.Modules.Module.DisplayModule.TimingRequirements)">
+            <summary>
+            Configure the onboard display controller to fulfil the requirements of a display using the RGB sockets. If doing this requires rebooting, then the method must reboot and not return. If
+            there is no onboard display controller, then NotSupportedException must be thrown.
+            </summary>
+            <param name="displayModel">Display model name.</param>
+            <param name="width">Display physical width in pixels, ignoring the orientation setting.</param>
+            <param name="height">Display physical height in lines, ignoring the orientation setting.</param>
+            <param name="orientationDeg">Display orientation in degrees.</param>
+            <param name="timing">The required timings from an LCD controller.</param>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MainboardName">
+            <summary>The name of the mainboard.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MainboardVersion">
+            <summary>The current version of the mainboard hardware.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SDCardMounted">
+            <summary>Raised when the file system of the SD card is mounted.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SDCardUnmounted">
+            <summary>Raised when the file system of the SD card is unmounted.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsSDCardInserted">
+            <summary>Whether or not an SD card is inserted.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsSDCardMounted">
+            <summary>Whether or not the SD card is mounted.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SDCardStorageDevice">
+            <summary>The StorageDevice for the currently mounted SD card.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MassStorageMounted">
+            <summary>Raised when the file system of the mass storage device is mounted.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MassStorageUnmounted">
+            <summary>Raised when the file system of the mass storage device is unmounted.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MouseConnected">
+            <summary>Raised when a mouse is connected.</summary>
+        </member>
+        <member name="E:GHIElectronics.Gadgeteer.FEZCerbuinoBee.KeyboardConnected">
+            <summary>Raised when a keyboard is connected.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.ConnectedKeyboard">
+            <summary>The current connected keyboard.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.ConnectedMouse">
+            <summary>The current connected mouse.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MassStorageDevice">
+            <summary>The StorageDevice for the currently mounted mass storage device.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsKeyboardConnected">
+            <summary>Whether or not the keyboard is connected.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsMouseConnected">
+            <summary>Whether or not the mouse is connected.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsMassStorageConnected">
+            <summary>Whether or not the mass storage device is connected.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbuinoBee.IsMassStorageMounted">
+            <summary>Whether or not the mass storage device is mounted.</summary>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SDCardMountedEventHandler">
+            <summary>Represents the delegate that is used for the Mounted event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="device">A storage device that can be used to access the SD card.</param>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.SDCardUnmountedEventHandler">
+            <summary>Represents the delegate that is used for the Unmounted event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="e">The event arguments.</param>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MassStorageMountedEventHandler">
+            <summary>Represents the delegate that is used for the MassStorageMounted event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="device">A storage device that can be used to access the SD card.</param>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MassStorageUnmountedEventHandler">
+            <summary>Represents the delegate that is used for the MassStorageUnmounted event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="e">The event arguments.</param>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.MouseConnectedEventHandler">
+            <summary>Represents the delegate that is used for the MouseConnected event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="mouse">The object associated with the event.</param>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbuinoBee.KeyboardConnectedEventHandler">
+            <summary>Represents the delegate that is used to handle the KeyboardConnected event.</summary>
+            <param name="sender">The object that raised the event.</param>
+            <param name="keyboard">The object associated with the event.</param>
+        </member>
+    </members>
+</doc>
