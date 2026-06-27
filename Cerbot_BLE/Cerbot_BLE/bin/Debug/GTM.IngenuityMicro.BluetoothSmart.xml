@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GTM.IngenuityMicro.BluetoothSmart</name>
+    </assembly>
+    <members>
+        <member name="T:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart">
+            <summary>
+            A BluetoothSmart module for Microsoft .NET Gadgeteer
+            </summary>
+        </member>
+        <member name="F:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.Delimiter">
+            <summary>
+            String delimiter
+            </summary>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.#ctor(System.Int32)">
+            <summary>
+            Gadgeteer Bluetooth Smart Module
+            </summary>
+            <param name="socketNumber"></param>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.SendString(System.String,System.Boolean)">
+            <summary>
+            Send string
+            </summary>
+            <param name="data">Stirng to be sent</param>
+            <param name="newLine">Add new line</param>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.SendBytes(System.Byte[])">
+            <summary>
+            Send Byte array
+            </summary>
+            <param name="data">bytes to send</param>
+        </member>
+        <member name="E:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.DataReceived">
+            <summary>
+            
+            </summary>
+        </member>
+        <member name="T:Gadgeteer.Modules.IngenuityMicro.BluetoothSmart.BleReceivedHandler">
+            <summary>
+            
+            </summary>
+            <param name="val"></param>
+        </member>
+        <member name="T:Gadgeteer.Modules.IngenuityMicro.SimpleSerial">
+            <summary>
+            Extends the .NET Micro Framework SerialPort Class with additional methods from the Full .NET Framework SerialPort Class
+            as well as other useful methods.
+            </summary>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.Write(System.String)">
+            <summary>
+            Writes the specified string to the serial port.
+            </summary>
+            <param name="txt"></param>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.WriteLine(System.String)">
+            <summary>
+            Writes the specified string and the NewLine value to the output buffer.
+            </summary>
+            <param name="txt"></param>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.ReadExistingBinary">
+            <summary>
+            Reads all immediately available bytes, as binary data, in both the stream and the input buffer of the SerialPort object.
+            </summary>
+            <returns>byte[]</returns>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.ReadExisting">
+            <summary>
+            Reads all immediately available bytes, based on the encoding, in both the stream and the input buffer of the SerialPort object.
+            </summary>
+            <returns>String</returns>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.Open">
+            <summary>
+            Opens a new serial port connection.
+            </summary>
+        </member>
+        <member name="F:Gadgeteer.Modules.IngenuityMicro.SimpleSerial._Remainder">
+            <summary>
+            Stores any incomplete message that hasn't yet been terminated with a delimiter.
+            This will be concatenated with new data from the next DataReceived event to (hopefully) form a complete message. 
+            This property is only populated after the Deserialize() method has been called.
+            </summary>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.Deserialize(System.String)">
+            <summary>
+            Splits data from a serial buffer into separate messages, provided that each message is delimited by one or more end-of-line character(s).
+            </summary>
+            <param name="delimiter">Character sequence that terminates a message line. Default is "\r\n".</param>
+            <returns>
+            An array of strings whose items correspond to individual messages, without the delimiters.
+            Only complete, properly terminated messages are included. Incomplete message fragments are saved to be appended to
+            the next received data.
+            
+            If no complete messages are found in the serial buffer, the output array will be empty with Length = 0.
+            </returns>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.SplitString(System.String,System.String@,System.String,System.Boolean)">
+            <summary>
+            Splits a stream into separate lines, given a delimiter.
+            </summary>
+            <param name="input">
+            The string that will be deserialized.
+            
+            Example:
+            Assume a device transmits serial messages, and each message is separated by \r\n (carriage return + line feed).
+            
+            For illustration, picture the following output from such a device:
+            First message.\r\n
+            Second message.\r\n
+            Third message.\r\n
+            Fourth message.\r\n
+            
+            Once a SerialPort object receives the first bytes, the DataReceived event will be fired,
+            and the interrupt handler may read a string from the serial buffer like so:
+            "First message.\r\nSecond message.\r\nThird message.\r\nFourth me"
+            
+            The message above has been cut off to simulate the DataReceived event being fired before the sender has finished 
+            transmitting all messages (the "ssage.\r\n" characters have not yet traveled down the wire, so to speak).
+            At the moment the DataReceived event is fired, the interrupt handler only has access to the (truncated) 
+            input message above.
+            
+            In this example, the string from the serial buffer will be the input to this method.
+            </param>
+            <param name="remainder">
+            Any incomplete messages that have not yet been properly terminated will be returned via this output parameter.
+            In the above example, this parameter will return "Fourth me". Ideally, this output parameter will be appended to the next
+            transmission to reconstruct the next complete message.
+            </param>
+            <param name="delimiter">
+            A string specifying the delimiter between messages. 
+            If omitted, this defaults to "\r\n" (carriage return + line feed).
+            </param>
+            <param name="includeDelimiterInOutput">
+            Determines whether each item in the output array will include the specified delimiter.
+            If True, the delimiter will be included at the end of each string in the output array.
+            If False (default), the delimiter will be excluded from the output strings.
+            </param>
+            <returns>
+            string[]
+            Every item in this string array will be an individual, complete message. The first element
+            in the array corresponds to the first message, and so forth. The length of the array will be equal to the number of
+            complete messages extracted from the input string.
+            
+            From the above example, if includeDelimiterInOutput == True, this output will be:
+            output[0] = "First message.\r\n"
+            output[1] = "Second message.\r\n"
+            output[2] = "Third message.\r\n"
+            
+            If no complete messages have been received, the output array will be empty with Length = 0.
+            </returns>
+        </member>
+        <member name="M:Gadgeteer.Modules.IngenuityMicro.SimpleSerial.ScrubStringArray(System.String[],System.String,System.String)">
+            <summary>
+            Removes items in an input array that are equal to a specified string.
+            </summary>
+            <param name="input">String array to scrub.</param>
+            <param name="removeString">String whose occurrences will be removed if an item consists of it. Default: string.Empty.</param>
+            <param name="delimiter">
+            Delimiter that will be appended to the end of each element in the output array. Default: \r\n (carriage return + line feed).
+            To omit delimiters from the end of each message, set this parameter to string.Empty.
+            </param>
+            <returns>
+            String array containing only desired strings. The length of this output will likely be shorter than the input array.
+            </returns>
+        </member>
+    </members>
+</doc>

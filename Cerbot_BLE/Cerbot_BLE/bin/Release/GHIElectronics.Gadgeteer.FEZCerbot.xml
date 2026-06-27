@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GHIElectronics.Gadgeteer.FEZCerbot</name>
+    </assembly>
+    <members>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbot">
+            <summary>The mainboard class for the FEZ Cerbot.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.#ctor">
+            <summary>Constructs a new instance.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.GetStorageDeviceVolumeNames">
+            <summary>The storage device volume names supported by this mainboard.</summary>
+            <returns>The volume names.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.MountStorageDevice(System.String)">
+            <summary>Mounts the device with the given name.</summary>
+            <param name="volumeName">The device to mount.</param>
+            <returns>Whether or not the mount was successful.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.UnmountStorageDevice(System.String)">
+            <summary>Unmounts the device with the given name.</summary>
+            <param name="volumeName">The device to unmount.</param>
+            <returns>Whether or not the unmount was successful.</returns>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.EnsureRgbSocketPinsAvailable">
+            <summary>Ensures that the RGB socket pins are available by disabling the display controller if needed.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetDebugLED(System.Boolean)">
+            <summary>Sets the state of the debug LED.</summary>
+            <param name="on">The new state.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetProgrammingMode(Gadgeteer.Mainboard.ProgrammingInterface)">
+            <summary>Sets the programming mode of the device.</summary>
+            <param name="programmingInterface">The new programming mode.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.PostInit">
+            <summary>This performs post-initialization tasks for the mainboard. It is called by Gadgeteer.Program.Run and does not need to be called manually.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.StartBuzzer(System.Double,System.UInt32,System.Double)">
+            <summary>Sets the frequency and duration that the buzzer will buzz for.</summary>
+            <param name="frequency">The frequency that the buzzer will buzz in hertz.</param>
+            <param name="duration">The duration the buzzer will buzz for in milliseconds.</param>
+            <param name="dutyCycle">The duty cycle for the buzzer.</param>
+            <remarks>If duration is 0, the buzzer will buzz indefinitely. If it is non-zero, then this call will block for as many milliseconds as specified in duration, then return.</remarks>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.StopBuzzer">
+            <summary>Stops the buzzer from buzzing.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.GetReflectiveReading(GHIElectronics.Gadgeteer.FEZCerbot.ReflectiveSensors)">
+            <summary>Gets the reading from a reflective sensor between 0 and 100. The higher the number, the more reflection that was detected. Nearby objects reflect more than far objects.</summary>
+            <param name="sensor">The sensor to read from.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetReflectiveSensorState(System.Boolean)">
+            <summary>Turns the reflective sensors on or off to save power (true = on, false = off). They are on by default.</summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetLedIntensity(System.UInt32)">
+            <summary>Sets the intensity of every front LED.</summary>
+            <param name="intensity">The intensity between 0 and 100 to set the LEDs to. The higher the number, the brighter the LED.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetLedBitmask(System.UInt16)">
+            <summary>Sets the state of the front LEDs using a short where each bit represents one LED.</summary>
+            <param name="mask">The mask used to set the LED state.</param>
+            <remarks>Bit 0 is the leftmost LED, bit 15 is rightmost LED.</remarks>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.TurnOnLed(System.Int32)">
+            <summary>Turns on the specified front LED while leaving the others unchanged.</summary>
+            <param name="which">The LED number to turn on. Between 1 and 16.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.TurnOffLed(System.Int32)">
+            <summary>Turns off the specified front LED while leaving the others unchanged.</summary>
+            <param name="which">The LED number to turn off. Between 1 and 16.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetServoLimits(System.UInt32,System.UInt32)">
+            <summary>Sets the pulse limits for the servo. You must call this before setting the servo position.</summary>
+            <param name="minPulse">The minimum pulse width the servo can handle in microseconds.</param>
+            <param name="maxPulse">The maximum pulse width the servo can handle in microseconds.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetServoPosition(System.Double)">
+            <summary>Sets the position of the servo if one is present. Make sure to call SetServoLimits(min, max) before using this function.</summary>
+            <param name="position">
+            A number between 0 and 100 that represents the position of the servo. 0 means the servo will be sent the minimum pulse, 100 means it will be sent the maximum pulse, and number in between
+            scale between the minimum and maximum.
+            </param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetMotorInversion(System.Boolean,System.Boolean)">
+            <summary>
+            If you find that the motors go forward when passed a negative number due to reversed wiring, call this function. It will invert the motor direction so that when you pass in a positive
+            speed, it goes forward.
+            </summary>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.SetMotorSpeed(System.Int32,System.Int32)">
+            <summary>Sets the speed of the motor. -100 is full speed backwards, 100 is full speed forward, and 0 is stopped.</summary>
+            <param name="leftSpeed">The new speed of the left motor.</param>
+            <param name="rightSpeed">The new speed of the right motor.</param>
+        </member>
+        <member name="M:GHIElectronics.Gadgeteer.FEZCerbot.OnOnboardControllerDisplayConnected(System.String,System.Int32,System.Int32,System.Int32,Gadgeteer.Modules.Module.DisplayModule.TimingRequirements)">
+            <summary>
+            Configure the onboard display controller to fulfil the requirements of a display using the RGB sockets. If doing this requires rebooting, then the method must reboot and not return. If
+            there is no onboard display controller, then NotSupportedException must be thrown.
+            </summary>
+            <param name="displayModel">Display model name.</param>
+            <param name="width">Display physical width in pixels, ignoring the orientation setting.</param>
+            <param name="height">Display physical height in lines, ignoring the orientation setting.</param>
+            <param name="orientationDeg">Display orientation in degrees.</param>
+            <param name="timing">The required timings from an LCD controller.</param>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbot.MainboardName">
+            <summary>The name of the mainboard.</summary>
+        </member>
+        <member name="P:GHIElectronics.Gadgeteer.FEZCerbot.MainboardVersion">
+            <summary>The current version of the mainboard hardware.</summary>
+        </member>
+        <member name="T:GHIElectronics.Gadgeteer.FEZCerbot.ReflectiveSensors">
+            <summary>The reflective sensors on the Cerbot.</summary>
+        </member>
+        <member name="F:GHIElectronics.Gadgeteer.FEZCerbot.ReflectiveSensors.Left">
+            <summary>Represents the left sensor.</summary>
+        </member>
+        <member name="F:GHIElectronics.Gadgeteer.FEZCerbot.ReflectiveSensors.Right">
+            <summary>Represents the right sensor.</summary>
+        </member>
+    </members>
+</doc>
