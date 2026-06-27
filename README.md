@@ -6,6 +6,7 @@ Place to hold some NETMF and Gadgeteer Projects
 2. HeatingCurrentSurvey (Samples data from heating and Smartmeter)
 3. Example to access Fritz!Dect with NETMF
 4. Moisture Module Tunes Module (different melodies) on Cerbuino Bee
+5. Cerbot_BLE Control motors of FEZ-Cerbot and play some melodies
 
 Some hints to build the code:
 The code for the old GHI-Modules can be build on Visual Studio 2013 or Visual Studio 2015.
